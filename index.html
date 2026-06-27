@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dual Code — Science you can see</title>
+<meta name="description" content="Interactive dual-coding tools for GCSE science. Built SEND-first, so every learner can see the idea — one clear, moving picture at a time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ===== Design-system tokens ===== */
+:root{
+  --ink:#1A1813; --paper:#FAFAF7; --blue:#185FA5; --teal:#0F6E56;
+  --paper-2:#F2F1EC; --ink-soft:#4A4742; --line:#D8D5CC;
+  --warn:#B4690E;
+  --glass-bg:rgba(250,250,247,0.55);
+  --glass-edge:rgba(255,255,255,0.65);
+  --glass-shadow:rgba(26,24,19,0.10);
+  --focus:#185FA5;
+  --maxw:1240px;
+}
+*{box-sizing:border-box;}
+html{font-size:18px;scroll-behavior:smooth;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  color:var(--ink); line-height:1.6; background:var(--paper);
+  overflow-x:hidden;
+}
+h1,h2,h3,h4{font-family:'Lexend',system-ui,sans-serif;margin:0;line-height:1.1;}
+p{margin:0;}
+a{color:inherit;text-decoration:none;}
+
+/* ===== Liquid background ===== */
+.liquid{position:fixed;inset:0;z-index:-2;overflow:hidden;
+  background:
+    radial-gradient(1100px 700px at 10% 0%,  rgba(24,95,165,0.10), transparent 60%),
+    radial-gradient(1000px 700px at 92% 100%, rgba(15,110,86,0.10), transparent 60%),
+    var(--paper);
+}
+.blob{position:absolute;width:46vw;height:46vw;border-radius:50%;filter:blur(70px);
+  opacity:.5;mix-blend-mode:multiply;will-change:transform,border-radius;}
+.b1{left:-8vw;top:-6vw;background:radial-gradient(circle at 35% 35%,#A9CBEC,#185FA5);animation:drift1 26s ease-in-out infinite;}
+.b2{right:-10vw;top:18vw;background:radial-gradient(circle at 40% 35%,#96D8C5,#0F6E56);animation:drift2 32s ease-in-out infinite;}
+.b3{left:24vw;top:48vw;background:radial-gradient(circle at 35% 35%,#CFE2F4,#5EA0E0);animation:drift3 30s ease-in-out infinite;opacity:.42;}
+.b4{right:14vw;top:64vw;width:38vw;height:38vw;background:radial-gradient(circle at 40% 40%,#BFE6D9,#0F6E56);animation:drift1 36s ease-in-out infinite reverse;opacity:.34;}
+@keyframes drift1{0%{transform:translate(0,0) rotate(0deg) scale(1);border-radius:42% 58% 63% 37%/41% 44% 56% 59%;}
+  50%{transform:translate(6vw,5vh) rotate(18deg) scale(1.12);border-radius:60% 40% 38% 62%/55% 62% 38% 45%;}
+  100%{transform:translate(0,0) rotate(0deg) scale(1);border-radius:42% 58% 63% 37%/41% 44% 56% 59%;}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1);border-radius:55% 45% 50% 50%/52% 50% 50% 48%;}
+  50%{transform:translate(-7vw,4vh) scale(1.16);border-radius:38% 62% 58% 42%/60% 40% 60% 40%;}
+  100%{transform:translate(0,0) scale(1);border-radius:55% 45% 50% 50%/52% 50% 50% 48%;}}
+@keyframes drift3{0%{transform:translate(0,0) scale(1);border-radius:50% 50% 46% 54%/48% 52% 48% 52%;}
+  50%{transform:translate(5vw,-5vh) scale(1.1);border-radius:62% 38% 55% 45%/45% 55% 45% 55%;}
+  100%{transform:translate(0,0) scale(1);border-radius:50% 50% 46% 54%/48% 52% 48% 52%;}}
+
+/* faint grain for premium texture */
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* liquid cursor */
+.cursor-glow{position:fixed;top:0;left:0;width:340px;height:340px;border-radius:50%;z-index:-1;
+  pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:multiply;filter:blur(40px);opacity:.5;
+  background:radial-gradient(circle,rgba(24,95,165,.28),transparent 65%);transition:opacity .4s;}
+
+/* ===== Layout helpers ===== */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(18px,4vw,40px);}
+.glass{background:var(--glass-bg);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--glass-edge);box-shadow:0 8px 32px var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.5);}
+
+/* ===== Nav ===== */
+.nav{position:sticky;top:0;z-index:50;}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  margin:14px auto;max-width:var(--maxw);padding:12px clamp(16px,3vw,24px);border-radius:18px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Lexend';font-weight:700;font-size:1.15rem;}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 4px 14px rgba(24,95,165,.3);font-weight:800;}
+.nav-links{display:flex;align-items:center;gap:6px;}
+.nav-links a{font-weight:700;font-size:1rem;padding:10px 14px;border-radius:11px;color:var(--ink-soft);transition:background .2s,color .2s;}
+.nav-links a:hover{background:rgba(255,255,255,.5);color:var(--ink);}
+.nav-links a:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+.nav-cta{background:var(--blue)!important;color:#fff!important;box-shadow:0 4px 14px rgba(24,95,165,.3);}
+.nav-toggle{display:none;background:transparent;border:1px solid var(--line);border-radius:11px;font-size:1.4rem;
+  width:48px;height:48px;cursor:pointer;color:var(--ink);}
+
+/* ===== Hero ===== */
+.hero{padding:clamp(48px,9vw,120px) 0 clamp(36px,6vw,72px);text-align:center;}
+.eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.16em;font-size:.82rem;color:var(--blue);
+  text-transform:uppercase;margin-bottom:22px;}
+.hero h1{font-size:clamp(2.6rem,8vw,5.4rem);font-weight:800;letter-spacing:-.02em;}
+.hero h1 .grad{background:linear-gradient(110deg,var(--blue),var(--teal) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  position:relative;}
+.lede{max-width:64ch;margin:26px auto 0;font-size:clamp(1.08rem,1.7vw,1.32rem);color:var(--ink-soft);}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px;}
+.btn{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1.05rem;padding:.95rem 1.6rem;border-radius:14px;
+  min-height:54px;display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--glass-edge);
+  transition:transform .18s cubic-bezier(.4,0,.2,1),box-shadow .25s;}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn-primary{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(24,95,165,.32);}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(24,95,165,.4);}
+.btn-primary .arr{transition:transform .25s;}
+.btn-primary:hover .arr{transform:translateX(4px);}
+.btn-secondary{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--ink);}
+.btn-secondary:hover{transform:translateY(-3px);box-shadow:0 12px 26px var(--glass-shadow);}
+.hero-tags{list-style:none;display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin:42px 0 0;padding:0;
+  font-weight:700;color:var(--ink-soft);font-size:.95rem;}
+.hero-tags li{display:flex;align-items:center;gap:8px;}
+.hero-tags li::before{content:"";width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));}
+
+/* ===== Marquee ===== */
+.marquee{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin:clamp(30px,6vw,64px) 0;padding:16px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);}
+.track{display:inline-flex;gap:34px;white-space:nowrap;animation:scroll 34s linear infinite;font-family:'Lexend';font-weight:600;
+  color:var(--ink-soft);font-size:1.05rem;}
+.track span{display:inline-flex;align-items:center;gap:34px;}
+.track span::after{content:"◆";color:var(--blue);font-size:.7rem;}
+@keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ===== Sections ===== */
+.section{padding:clamp(40px,7vw,90px) 0;}
+.kicker{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--teal);text-transform:uppercase;}
+.sec-head{max-width:760px;margin-bottom:clamp(28px,4vw,48px);}
+.sec-head h2{font-size:clamp(1.9rem,4.2vw,3.1rem);font-weight:700;letter-spacing:-.015em;margin:12px 0 14px;}
+.sec-head p{font-size:clamp(1.05rem,1.5vw,1.2rem);color:var(--ink-soft);max-width:60ch;}
+
+/* ===== Tool cards ===== */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;}
+.card{position:relative;border-radius:22px;padding:26px;overflow:hidden;display:flex;flex-direction:column;gap:12px;
+  transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s;min-height:248px;}
+.card.spotlight::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(360px circle at var(--mx,50%) var(--my,0%),rgba(24,95,165,.16),transparent 60%);}
+.card.spotlight:hover::before{opacity:1;}
+.card:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(26,24,19,.16);}
+.card-ic{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-size:1.8rem;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 8px 20px rgba(24,95,165,.28);}
+.card h3{font-size:1.45rem;font-weight:700;}
+.card p{color:var(--ink-soft);font-size:1rem;flex:1;}
+.card-go{font-family:'Lexend';font-weight:700;color:var(--blue);display:inline-flex;align-items:center;gap:8px;transition:gap .2s;}
+.card.live:hover .card-go{gap:14px;}
+.badge{position:absolute;top:20px;right:20px;font-family:'Lexend';font-weight:700;font-size:.74rem;letter-spacing:.06em;
+  text-transform:uppercase;padding:5px 11px;border-radius:999px;}
+.badge.live{background:rgba(15,110,86,.14);color:var(--teal);border:1px solid rgba(15,110,86,.35);}
+.badge.soon{background:rgba(180,105,14,.12);color:var(--warn);border:1px solid rgba(180,105,14,.3);}
+.card.soon{opacity:.92;}
+.card.soon .card-ic{background:linear-gradient(135deg,#B9C2CC,#8A877E);box-shadow:none;}
+.card.soon .card-go{color:var(--ink-soft);}
+
+/* ===== Approach features ===== */
+.alt{position:relative;}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;}
+.feat{border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:10px;}
+.feat .fn{font-family:'Lexend';font-weight:800;font-size:1.4rem;
+  background:linear-gradient(135deg,var(--blue),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.feat h4{font-size:1.16rem;font-weight:700;}
+.feat p{color:var(--ink-soft);font-size:.98rem;}
+
+/* ===== Accessibility band ===== */
+.access .panel{border-radius:24px;padding:clamp(28px,4vw,48px);display:grid;grid-template-columns:1.1fr 1fr;gap:32px;align-items:center;}
+.access h2{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:700;margin-bottom:14px;}
+.access p{color:var(--ink-soft);font-size:1.08rem;}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:12px;}
+.checks li{display:flex;gap:12px;align-items:flex-start;font-weight:700;}
+.checks .tick{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;
+  background:var(--teal);font-size:1rem;}
+
+/* ===== Footer ===== */
+.foot{margin-top:clamp(40px,6vw,80px);border-top:1px solid var(--line);}
+.foot-in{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding:30px 0;color:var(--ink-soft);}
+.foot a{font-weight:700;color:var(--ink-soft);}
+.foot a:hover{color:var(--ink);}
+
+/* ===== Reveal on scroll ===== */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1);}
+.reveal.in{opacity:1;transform:none;}
+
+/* ===== Responsive ===== */
+@media(max-width:780px){
+  .nav-links{position:fixed;inset:74px 14px auto 14px;flex-direction:column;align-items:stretch;gap:8px;padding:14px;
+    border-radius:18px;display:none;}
+  .nav-links.open{display:flex;background:var(--paper);box-shadow:0 18px 40px var(--glass-shadow);border:1px solid var(--line);}
+  .nav-toggle{display:grid;place-items:center;}
+  .access .panel{grid-template-columns:1fr;}
+}
+
+/* ===== Accessibility guards (design system) ===== */
+@media (prefers-reduced-transparency: reduce),(prefers-contrast: more){
+  .glass,.btn-secondary,.nav-links.open{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+  .blob{animation:none!important;} .track{animation:none!important;} .cursor-glow{display:none!important;}
+  .reveal{opacity:1;transform:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="liquid" aria-hidden="true">
+  <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursor" aria-hidden="true"></div>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="nav-in glass">
+    <a class="brand" href="#top"><span class="mark">◐</span>Dual&nbsp;Code</a>
+    <nav class="nav-links" id="navLinks" aria-label="Primary">
+      <a href="#tools">Tools</a>
+      <a href="#approach">Approach</a>
+      <a href="#access">Accessibility</a>
+      <a class="nav-cta" href="12_inside_the_atom.html">Open a tool ↗</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">≡</button>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">GCSE Science · SEND-first · Dual-coding</p>
+      <h1>Science you can <span class="grad">see</span>.</h1>
+      <p class="lede">Interactive tools that turn abstract science into one clear, moving picture at a time — built for the learners with the greatest barriers, which makes them sharper for everyone.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#tools">Explore the tools <span class="arr">→</span></a>
+        <a class="btn btn-secondary" href="12_inside_the_atom.html">Try “Inside the Atom” ↗</a>
+      </div>
+      <ul class="hero-tags">
+        <li>AAA contrast</li>
+        <li>Keyboard-first</li>
+        <li>No timers, no penalties</li>
+        <li>Works at 200% zoom</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true">
+    <div class="track">
+      <span>Atomic structure&nbsp; Radioactive decay&nbsp; Bonding&nbsp; Quantitative chemistry&nbsp; Forces &amp; motion&nbsp; Energy&nbsp; Waves&nbsp; Cells&nbsp; Photosynthesis&nbsp; Required practicals&nbsp;</span>
+      <span>Atomic structure&nbsp; Radioactive decay&nbsp; Bonding&nbsp; Quantitative chemistry&nbsp; Forces &amp; motion&nbsp; Energy&nbsp; Waves&nbsp; Cells&nbsp; Photosynthesis&nbsp; Required practicals&nbsp;</span>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <section class="section" id="tools">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">01 — The tools</span>
+        <h2>One idea, made visible.</h2>
+        <p>Each tool is a single, self-contained activity. Trigger one change at a time, watch the science move, and never lose your place.</p>
+      </div>
+      <div class="cards">
+
+        <a class="card glass live spotlight reveal" href="12_inside_the_atom.html">
+          <span class="badge live">Live</span>
+          <div class="card-ic">⚛</div>
+          <h3>Inside the Atom</h3>
+          <p>How our model of the atom changed, the gold-foil experiment, and writing balanced decay equations on a periodic-table strip.</p>
+          <span class="card-go">Open tool →</span>
+        </a>
+
+        <div class="card glass soon spotlight reveal">
+          <span class="badge soon">Coming soon</span>
+          <div class="card-ic">⚖</div>
+          <h3>Quantitative Chemistry</h3>
+          <p>Moles, masses and balancing — seen as quantities that have to add up, not symbols to memorise.</p>
+          <span class="card-go">In build</span>
+        </div>
+
+        <div class="card glass soon spotlight reveal">
+          <span class="badge soon">Coming soon</span>
+          <div class="card-ic">🔗</div>
+          <h3>Bonding</h3>
+          <p>Ionic, covalent and metallic bonding shown as electrons moving and sharing — the picture behind the dot-and-cross.</p>
+          <span class="card-go">In build</span>
+        </div>
+
+        <div class="card glass soon spotlight reveal">
+          <span class="badge soon">Coming soon</span>
+          <div class="card-ic">🌡</div>
+          <h3>Rates &amp; Energy</h3>
+          <p>Collision theory and energy changes, where the animation carries the cause — not decoration.</p>
+          <span class="card-go">In build</span>
+        </div>
+
+        <div class="card glass soon spotlight reveal">
+          <span class="badge soon">Coming soon</span>
+          <div class="card-ic">🫧</div>
+          <h3>Cell Transport</h3>
+          <p>Diffusion, osmosis and active transport as particles crossing a boundary you can actually follow.</p>
+          <span class="card-go">In build</span>
+        </div>
+
+        <div class="card glass soon spotlight reveal">
+          <span class="badge soon">Coming soon</span>
+          <div class="card-ic">🌊</div>
+          <h3>Waves</h3>
+          <p>Wavelength, frequency and the spectrum — abstract numbers given a shape that moves.</p>
+          <span class="card-go">In build</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- APPROACH -->
+  <section class="section alt" id="approach">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">02 — The approach</span>
+        <h2>Built for the hardest barriers. Better for everyone.</h2>
+        <p>Five non-negotiable principles sit behind every tool. They come from SEND practice — and they happen to be good design for all learners.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat glass reveal"><span class="fn">01</span><h4>One idea at a time</h4><p>Cognitive load is the enemy. Nothing new appears until you ask for it — progressive disclosure over density, always.</p></div>
+        <div class="feat glass reveal"><span class="fn">02</span><h4>The visual carries meaning</h4><p>Every animation encodes something the words can’t — a sequence, a proportion, a transformation. No decorative motion.</p></div>
+        <div class="feat glass reveal"><span class="fn">03</span><h4>Clear boundaries</h4><p>Every region has a visible edge. A learner never has to guess where one thing ends and the next begins.</p></div>
+        <div class="feat glass reveal"><span class="fn">04</span><h4>Calm &amp; reversible</h4><p>Nothing moves unless you trigger it. Everything can be undone. No timers, no surprises, no penalties.</p></div>
+        <div class="feat glass reveal"><span class="fn">05</span><h4>Plain language</h4><p>Short instructions, key term first. Subject vocabulary is taught on first use, never assumed.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCESSIBILITY -->
+  <section class="section access" id="access">
+    <div class="wrap">
+      <div class="panel glass reveal">
+        <div>
+          <span class="kicker">03 — Accessibility, by default</span>
+          <h2>Designed to pass, not patched to comply.</h2>
+          <p>Accessibility isn’t a setting here — it’s the starting point. Every tool honours the reader’s own preferences and works without a mouse.</p>
+        </div>
+        <ul class="checks">
+          <li><span class="tick">✓</span><span>AAA contrast on every piece of text</span></li>
+          <li><span class="tick">✓</span><span>Full keyboard control with visible focus</span></li>
+          <li><span class="tick">✓</span><span>Honours reduced-motion, reduced-transparency &amp; high-contrast</span></li>
+          <li><span class="tick">✓</span><span>Touch targets ≥ 48px; works at 200% zoom</span></li>
+          <li><span class="tick">✓</span><span>Live announcements for screen readers</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span class="brand"><span class="mark">◐</span>Dual&nbsp;Code</span>
+    <span>Dual-coding science tools · built on a SEND-first design system</span>
+    <span>© <span id="yr"></span></span>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* year */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* mobile nav */
+const toggle=document.getElementById('navToggle'), links=document.getElementById('navLinks');
+toggle.addEventListener('click',()=>{
+  const open=links.classList.toggle('open');
+  toggle.setAttribute('aria-expanded',open);
+  toggle.textContent=open?'✕':'≡';
+});
+links.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+  links.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); toggle.textContent='≡';
+}));
+
+/* scroll reveal (with a fallback so content can never get stuck hidden) */
+const revealEls=document.querySelectorAll('.reveal');
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  },{threshold:.14});
+  revealEls.forEach(el=>io.observe(el));
+}else{
+  revealEls.forEach(el=>el.classList.add('in'));
+}
+
+/* card spotlight */
+document.querySelectorAll('.card.spotlight').forEach(card=>{
+  card.addEventListener('pointermove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    card.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+/* liquid cursor (smooth follow) */
+if(!reduce && window.matchMedia('(pointer:fine)').matches){
+  const cur=document.getElementById('cursor');
+  let tx=innerWidth/2, ty=innerHeight/2, cx=tx, cy=ty;
+  addEventListener('pointermove',e=>{ tx=e.clientX; ty=e.clientY; },{passive:true});
+  (function loop(){ cx+=(tx-cx)*0.12; cy+=(ty-cy)*0.12;
+    cur.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+    requestAnimationFrame(loop); })();
+} else {
+  const c=document.getElementById('cursor'); if(c) c.style.display='none';
+}
+</script>
+</body>
+</html>

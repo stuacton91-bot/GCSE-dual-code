@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside the Atom — Evolving Model & Radioactive Decay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CENTRAL DESIGN SYSTEM — tokens
+   ============================================================ */
+:root{
+  /* Core brand */
+  --ink:#1A1813; --paper:#FAFAF7; --blue:#185FA5; --teal:#0F6E56;
+  /* Derived surfaces */
+  --paper-2:#F2F1EC; --ink-soft:#4A4742; --line:#D8D5CC;
+  /* Semantic */
+  --warn:#B4690E; --bad:#A23B3B; --good:var(--teal);
+  /* Frosted glass */
+  --glass-bg:rgba(250,250,247,0.55);
+  --glass-edge:rgba(255,255,255,0.65);
+  --glass-shadow:rgba(26,24,19,0.10);
+  /* Focus */
+  --focus:#185FA5;
+  /* Particle palette (within-system derivations) */
+  --proton-hi:#5EA0E0; --proton:#185FA5; --proton-lo:#0E3F70;
+  --neutron-hi:#CFCCC4; --neutron:#8A877E; --neutron-lo:#56534B;
+  --electron:#1A1813; --electron-hi:#6E6A62;
+  --gamma:#B4690E;
+}
+
+*{box-sizing:border-box;}
+html{font-size:18px;}  /* larger base size for SEND legibility — scales the whole UI, esp. on wide / 4K screens */
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  color:var(--ink);
+  line-height:1.6;
+  min-height:100vh;
+  padding:clamp(12px,2.5vw,28px);
+  background:var(--paper);
+  overflow-x:hidden;
+}
+
+/* ---- Liquid background (matches the Dual Code home page; kept subtle for focus, freezes under reduced-motion) ---- */
+.liquid{position:fixed;inset:0;z-index:-2;overflow:hidden;
+  background:
+    radial-gradient(1100px 700px at 10% 0%,  rgba(24,95,165,0.10), transparent 60%),
+    radial-gradient(1000px 700px at 92% 100%, rgba(15,110,86,0.10), transparent 60%),
+    var(--paper);}
+.blob{position:absolute;width:46vw;height:46vw;border-radius:50%;filter:blur(80px);
+  opacity:.36;mix-blend-mode:multiply;will-change:transform,border-radius;}
+.b1{left:-10vw;top:-8vw;background:radial-gradient(circle at 35% 35%,#A9CBEC,#185FA5);animation:drift1 30s ease-in-out infinite;}
+.b2{right:-12vw;top:14vw;background:radial-gradient(circle at 40% 35%,#96D8C5,#0F6E56);animation:drift2 36s ease-in-out infinite;}
+.b3{left:22vw;top:54vw;background:radial-gradient(circle at 35% 35%,#CFE2F4,#5EA0E0);animation:drift3 34s ease-in-out infinite;opacity:.3;}
+.b4{right:12vw;top:74vw;width:36vw;height:36vw;background:radial-gradient(circle at 40% 40%,#BFE6D9,#0F6E56);animation:drift1 40s ease-in-out infinite reverse;opacity:.24;}
+@keyframes drift1{0%{transform:translate(0,0) rotate(0deg) scale(1);border-radius:42% 58% 63% 37%/41% 44% 56% 59%;}
+  50%{transform:translate(5vw,4vh) rotate(16deg) scale(1.1);border-radius:60% 40% 38% 62%/55% 62% 38% 45%;}
+  100%{transform:translate(0,0) rotate(0deg) scale(1);border-radius:42% 58% 63% 37%/41% 44% 56% 59%;}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1);border-radius:55% 45% 50% 50%/52% 50% 50% 48%;}
+  50%{transform:translate(-6vw,3vh) scale(1.14);border-radius:38% 62% 58% 42%/60% 40% 60% 40%;}
+  100%{transform:translate(0,0) scale(1);border-radius:55% 45% 50% 50%/52% 50% 50% 48%;}}
+@keyframes drift3{0%{transform:translate(0,0) scale(1);border-radius:50% 50% 46% 54%/48% 52% 48% 52%;}
+  50%{transform:translate(4vw,-4vh) scale(1.08);border-radius:62% 38% 55% 45%/45% 55% 45% 55%;}
+  100%{transform:translate(0,0) scale(1);border-radius:50% 50% 46% 54%/48% 52% 48% 52%;}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.cursor-glow{position:fixed;top:0;left:0;width:300px;height:300px;border-radius:50%;z-index:-1;
+  pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:multiply;filter:blur(45px);opacity:.4;
+  background:radial-gradient(circle,rgba(24,95,165,.24),transparent 65%);}
+
+/* ---- Frosted glass signature surface ---- */
+.glass{
+  background:var(--glass-bg);
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--glass-edge);
+  border-radius:20px;
+  box-shadow:0 8px 32px var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* ---- Typography scale ---- */
+h1,h2,h3{font-family:'Lexend',system-ui,sans-serif;margin:0;line-height:1.2;}
+.tool-title{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:600;line-height:1.15;}
+.section-heading{font-size:clamp(1.15rem,2vw,1.4rem);font-weight:600;}
+p{margin:0;}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+
+/* Top nav (matches home page) */
+.nav{position:sticky;top:0;z-index:50;margin-bottom:4px;}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  max-width:1760px;margin:0 auto;padding:10px clamp(14px,2vw,22px);border-radius:18px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Lexend';font-weight:700;font-size:1.1rem;color:var(--ink);text-decoration:none;}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 4px 14px rgba(24,95,165,.3);font-weight:800;}
+.nav-back{font-family:'Lexend';font-weight:700;font-size:1rem;color:var(--ink-soft);text-decoration:none;
+  padding:9px 14px;border-radius:11px;transition:background .2s,color .2s;}
+.nav-back:hover{background:rgba(255,255,255,.5);color:var(--ink);}
+.nav-back:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+
+/* Header strip */
+.header{padding:clamp(20px,2.6vw,28px) clamp(20px,3vw,34px);}
+.header .eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--blue);
+  text-transform:uppercase;margin-bottom:12px;}
+.header .purpose{color:var(--ink-soft);margin-top:8px;max-width:62ch;}
+.grad{background:linear-gradient(110deg,var(--blue),var(--teal) 75%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+/* Spotlight hover (matches home page cards) */
+.spotlight{position:relative;overflow:hidden;}
+.spotlight::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(320px circle at var(--mx,50%) var(--my,50%),rgba(24,95,165,.14),transparent 60%);}
+.spotlight:hover::before{opacity:1;}
+
+/* Mode tabs — large & unmistakable */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px;}
+.tab{
+  font-family:'Lexend',system-ui,sans-serif;font-weight:600;
+  font-size:clamp(1rem,1.8vw,1.2rem);
+  padding:18px 16px;border-radius:14px;cursor:pointer;
+  border:2px solid transparent;background:transparent;color:var(--ink-soft);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease;
+}
+.tab .tab-sub{font-family:'Atkinson Hyperlegible';font-weight:400;font-size:.9rem;color:var(--ink-soft);}
+.tab[aria-selected="true"]{
+  background:var(--blue);color:#fff;box-shadow:0 6px 20px rgba(24,95,165,.30);
+}
+.tab[aria-selected="true"] .tab-sub{color:rgba(255,255,255,.92);}
+.tab:hover{transform:translateY(-2px);}
+.tab:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+
+/* Workspace grid: stage is the star */
+.workspace{display:grid;gap:18px;grid-template-columns:1.9fr 1fr;
+  grid-template-areas:"stage explain" "stage rail";align-items:stretch;}
+.stage{grid-area:stage;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:620px;}
+.explain{grid-area:explain;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+.rail{grid-area:rail;padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+@media(max-width:880px){
+  .workspace{grid-template-columns:1fr;grid-template-areas:"stage" "explain" "rail";}
+  .stage{min-height:auto;}
+}
+
+/* Stage internals */
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.stage-title{font-size:1rem;font-weight:700;font-family:'Atkinson Hyperlegible';color:var(--ink-soft);
+  letter-spacing:.02em;text-transform:uppercase;font-size:.82rem;}
+.stage-svg-frame{
+  flex:1;border-radius:16px;overflow:hidden;position:relative;
+  background:radial-gradient(120% 120% at 50% 20%, rgba(255,255,255,.55), rgba(242,241,236,.25) 55%, rgba(216,213,204,.18) 100%);
+  border:1px solid var(--line);min-height:440px;display:flex;
+}
+svg{width:100%;height:100%;display:block;}
+
+/* Motion on/off toggle (corner of the model stage) */
+.motion-toggle{position:absolute;top:12px;right:12px;z-index:5;
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:'Atkinson Hyperlegible';font-weight:700;font-size:.95rem;color:var(--ink);
+  background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--glass-edge);border-radius:999px;padding:10px 15px;min-height:46px;cursor:pointer;
+  box-shadow:0 4px 14px var(--glass-shadow);transition:transform .15s ease,box-shadow .2s ease;}
+.motion-toggle:hover{transform:translateY(-1px);box-shadow:0 8px 18px var(--glass-shadow);}
+.motion-toggle:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.motion-toggle .mt-dot{width:13px;height:13px;border-radius:50%;flex:none;background:var(--line);transition:background .2s,box-shadow .2s;}
+.motion-toggle.on .mt-dot{background:var(--teal);box-shadow:0 0 0 4px rgba(15,110,86,.20);}
+.motion-toggle .mt-state{min-width:2.2ch;color:var(--ink-soft);}
+.motion-toggle.on .mt-state{color:var(--teal);}
+
+/* Legend chips */
+.legend{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:1.02rem;font-weight:700;
+  background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:7px 15px;color:var(--ink-soft);}
+.chip .dot{width:18px;height:18px;border-radius:50%;flex:none;box-shadow:inset 0 1px 1px rgba(255,255,255,.6);}
+.chip.proton .dot{background:radial-gradient(circle at 35% 30%,var(--proton-hi),var(--proton) 70%);}
+.chip.neutron .dot{background:radial-gradient(circle at 35% 30%,var(--neutron-hi),var(--neutron) 75%);}
+.chip.electron .dot{background:radial-gradient(circle at 35% 30%,var(--electron-hi),var(--electron) 80%);}
+.chip.positive .dot{background:radial-gradient(circle at 35% 30%,#D98C8C,#9A4A4A 75%);}
+
+/* Nuclear notation readout */
+.notation{display:flex;align-items:center;gap:6px;font-family:'Lexend';}
+.notation .nums{display:flex;flex-direction:column;align-items:flex-end;line-height:1;gap:7px;}
+.notation .mass,.notation .atomic{font-weight:600;font-size:clamp(1.1rem,2.2vw,1.5rem);
+  padding:2px 8px;border-radius:8px;transition:background .25s ease,color .25s ease;}
+.notation .mass{background:rgba(24,95,165,.10);color:var(--blue);}
+.notation .atomic{background:rgba(15,110,86,.10);color:var(--teal);}
+.notation .symbol{font-size:clamp(2.6rem,7vw,3.8rem);font-weight:700;color:var(--ink);}
+.num-pulse{animation:numpulse 1.1s cubic-bezier(.4,0,.2,1);}
+@keyframes numpulse{0%{transform:scale(1);}30%{transform:scale(1.28);box-shadow:0 0 0 4px rgba(15,110,86,.25);}100%{transform:scale(1);}}
+.element-name{font-family:'Lexend';font-weight:500;color:var(--ink-soft);font-size:1rem;}
+.readout-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.num-key{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--ink-soft);}
+.num-key b.blue{color:var(--blue);} .num-key b.teal{color:var(--teal);}
+
+/* Explanation card */
+.card{display:flex;flex-direction:column;gap:10px;}
+.card .era{font-size:.85rem;font-weight:700;color:var(--blue);letter-spacing:.02em;}
+.card .field{display:flex;flex-direction:column;gap:3px;}
+.card .field .label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.card .field .value{font-size:1.02rem;}
+.divider{height:1px;background:var(--line);border:0;margin:2px 0;}
+
+/* Feedback / sentence block */
+.sentence{border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;
+  font-size:1.02rem;border:1px solid var(--line);background:rgba(255,255,255,.45);transition:background .25s ease,border-color .25s ease;}
+.sentence .ico{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;font-family:'Lexend';}
+.sentence.good{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);}
+.sentence.good .ico{background:var(--teal);}
+.sentence.warn{background:rgba(180,105,14,.10);border-color:rgba(180,105,14,.40);}
+.sentence.warn .ico{background:var(--warn);}
+.sentence.info .ico{background:var(--blue);}
+
+/* Step indicator */
+.stepper{display:flex;align-items:center;gap:10px;}
+.stepdots{display:flex;gap:7px;}
+.stepdots i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .25s,transform .25s;}
+.stepdots i.on{background:var(--blue);transform:scale(1.25);}
+.step-label{font-size:.9rem;color:var(--ink-soft);font-weight:700;}
+
+/* Buttons */
+.btn{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1rem;
+  padding:.75rem 1.25rem;border-radius:12px;min-height:48px;min-width:48px;
+  border:1px solid var(--glass-edge);cursor:pointer;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 8px 22px rgba(24,95,165,.32);}
+.btn-primary:hover:not(:disabled){box-shadow:0 14px 30px rgba(24,95,165,.42);}
+.btn-secondary{background:rgba(255,255,255,.5);backdrop-filter:blur(12px);color:var(--ink);}
+.btn-secondary:hover:not(:disabled){box-shadow:0 12px 26px var(--glass-shadow);}
+.btn-decay{background:rgba(255,255,255,.55);color:var(--ink);border:1px solid var(--line);
+  justify-content:flex-start;text-align:left;padding:.7rem 1rem;}
+.btn-decay .glyph{font-family:'Lexend';font-weight:700;font-size:1.15rem;width:34px;height:34px;border-radius:9px;
+  display:grid;place-items:center;flex:none;color:#fff;}
+.btn-decay .gA{background:var(--blue);} .btn-decay .gB{background:var(--teal);} .btn-decay .gG{background:var(--warn);}
+.btn-decay .meta{display:flex;flex-direction:column;line-height:1.15;}
+.btn-decay .meta small{font-weight:400;color:var(--ink-soft);font-size:.82rem;}
+.btn:hover:not(:disabled){transform:translateY(-2px);}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.rail-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn{flex:1;}
+
+/* "See why" reveal — full-width widescreen experiment panel */
+.seewhy{margin-top:2px;}
+.reveal-panel{padding:24px clamp(18px,3vw,36px);animation:fadein .45s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.reveal-panel h3{font-size:clamp(1.25rem,2vw,1.6rem);margin-bottom:16px;}
+.reveal-panel .mini-frame{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#0E1A22;}
+.reveal-panel .mini-frame svg{width:100%;height:auto;display:block;}
+.reveal-panel .cap{font-size:clamp(1.05rem,1.4vw,1.22rem);color:var(--ink-soft);margin-top:14px;max-width:90ch;}
+.scatter-counters{display:flex;justify-content:space-between;gap:16px;margin-bottom:16px;}
+.counter{flex:1;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:16px;
+  border:1px solid var(--line);background:rgba(255,255,255,.55);}
+.counter .cnum{font-family:'Lexend';font-weight:700;font-size:clamp(2.4rem,4.5vw,3.6rem);line-height:1;min-width:1.6ch;text-align:center;}
+.counter .clab{font-size:clamp(1.05rem,1.5vw,1.25rem);font-weight:700;color:var(--ink-soft);}
+.counter.deflect{border-color:rgba(227,178,60,.6);background:rgba(227,178,60,.10);}
+.counter.deflect .cnum{color:var(--warn);}
+.counter.pass{border-color:rgba(15,110,86,.5);background:rgba(15,110,86,.08);}
+.counter.pass .cnum{color:var(--teal);justify-content:flex-end;}
+.counter.pass{flex-direction:row-reverse;text-align:right;}
+.scatter-btns{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;}
+
+/* Takeaway pill */
+.takeaway{margin-top:auto;border-radius:14px;padding:14px 16px;background:linear-gradient(120deg,rgba(24,95,165,.12),rgba(15,110,86,.12));
+  border:1px solid var(--glass-edge);font-weight:700;display:flex;gap:10px;align-items:flex-start;}
+.takeaway .star{flex:none;}
+
+/* ===== MODE B — balanced decay equations (periodic-table dual code) ===== */
+.decay-badge{font-family:'Lexend';font-weight:700;font-size:1rem;padding:6px 14px;border-radius:999px;color:#fff;white-space:nowrap;}
+.decay-badge.alpha{background:var(--blue);}
+.decay-badge.beta{background:var(--teal);}
+.decay-badge.gamma{background:var(--warn);}
+.b-stage-inner{margin-top:auto;margin-bottom:auto;display:flex;flex-direction:column;gap:24px;}
+
+.pt-wrap{border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;background:rgba(255,255,255,.4);}
+.pt-axis{font-size:.95rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;text-align:center;}
+.pt-strip{position:relative;display:flex;gap:10px;justify-content:center;padding-top:50px;}
+.pt-tile{flex:1 1 0;max-width:130px;min-width:60px;border:2px solid var(--line);border-radius:12px;background:rgba(255,255,255,.7);
+  padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:transform .35s cubic-bezier(.4,0,.2,1),border-color .35s,background .35s,box-shadow .35s;}
+.pt-tile .z{font-family:'Lexend';font-weight:600;font-size:1rem;color:var(--ink-soft);align-self:flex-start;}
+.pt-tile .sym{font-family:'Lexend';font-weight:700;font-size:clamp(1.6rem,3vw,2.4rem);line-height:1;}
+.pt-tile .nm{font-size:.82rem;color:var(--ink-soft);text-align:center;line-height:1.1;}
+.pt-tile.parent{border-color:var(--blue);background:rgba(24,95,165,.12);box-shadow:0 6px 18px rgba(24,95,165,.18);}
+.pt-tile.daughter{border-color:var(--teal);background:rgba(15,110,86,.15);box-shadow:0 8px 22px rgba(15,110,86,.22);animation:tilePop .55s cubic-bezier(.4,0,.2,1);}
+@keyframes tilePop{0%{transform:scale(.82);opacity:.35;}60%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+
+.hop-arrow{position:absolute;top:6px;height:42px;pointer-events:none;opacity:0;}
+.hop-arrow.show{animation:hopIn .5s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes hopIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.hop-line{position:absolute;bottom:8px;left:0;right:0;height:4px;background:var(--teal);border-radius:3px;}
+.hop-head{position:absolute;bottom:2px;width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;}
+.hop-arrow[data-dir="right"] .hop-head{right:-3px;border-left:14px solid var(--teal);}
+.hop-arrow[data-dir="left"]  .hop-head{left:-3px;border-right:14px solid var(--teal);}
+.hop-label{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'Lexend';font-weight:700;color:var(--teal);font-size:1.02rem;background:var(--paper);padding:0 8px;}
+
+.equation{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
+.equation .op{font-family:'Lexend';font-weight:700;font-size:clamp(1.7rem,3vw,2.6rem);color:var(--ink-soft);}
+.nuclide{display:inline-flex;align-items:center;gap:7px;border:2px solid var(--line);border-radius:14px;padding:10px 16px;background:rgba(255,255,255,.7);transition:border-color .3s,background .3s;}
+.nuclide .nums{display:flex;flex-direction:column;align-items:flex-end;line-height:1.04;font-family:'Lexend';font-weight:600;}
+.nuclide .nums .a{font-size:clamp(1.1rem,1.9vw,1.5rem);}
+.nuclide .nums .zz{font-size:clamp(1.1rem,1.9vw,1.5rem);color:var(--ink-soft);}
+.nuclide .el{font-family:'Lexend';font-weight:700;font-size:clamp(2rem,4vw,3.1rem);line-height:1;}
+.nuclide.parent{border-color:var(--blue);background:rgba(24,95,165,.10);}
+.nuclide.daughter{border-color:var(--teal);background:rgba(15,110,86,.10);}
+.nuclide.particle{border-color:var(--warn);background:rgba(180,105,14,.10);}
+.nuclide.unknown{border-style:dashed;}
+.nuclide.unknown .el,.nuclide.unknown .a,.nuclide.unknown .zz{color:var(--warn);}
+.nuclide.reveal-pop{animation:tilePop .55s cubic-bezier(.4,0,.2,1);}
+
+.rule-card{border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:rgba(255,255,255,.5);display:flex;flex-direction:column;gap:6px;}
+.rule-card .rl-title{font-weight:700;font-family:'Lexend';display:flex;align-items:center;gap:10px;font-size:1.05rem;}
+.rule-card .rl-title .badge{width:34px;height:34px;flex:none;border-radius:9px;display:grid;place-items:center;color:#fff;font-family:'Lexend';font-weight:700;font-size:1.1rem;}
+.rule-card.alpha .badge{background:var(--blue);} .rule-card.beta .badge{background:var(--teal);} .rule-card.gamma .badge{background:var(--warn);}
+.rule-card ul{margin:4px 0 0;padding-left:22px;} .rule-card li{margin:3px 0;}
+
+.balance{border-radius:14px;padding:14px 16px;border:1px solid rgba(15,110,86,.4);background:rgba(15,110,86,.08);display:flex;flex-direction:column;gap:10px;}
+.balance .bl{display:flex;align-items:center;gap:12px;font-size:1.1rem;font-weight:700;font-family:'Lexend';flex-wrap:wrap;}
+.balance .bl .tick{color:var(--teal);font-size:1.3rem;}
+.balance .bl .lbl{color:var(--ink-soft);font-weight:600;font-size:.95rem;min-width:130px;}
+
+.decay-select{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1.05rem;padding:.7rem;border-radius:12px;
+  border:1px solid var(--line);background:rgba(255,255,255,.75);color:var(--ink);min-height:48px;width:100%;cursor:pointer;}
+.decay-select:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+
+/* Helpers */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[hidden]{display:none !important;}
+.footnote{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:4px 0 2px;}
+
+/* ============================================================
+   ACCESSIBILITY GUARDS — required by the design system
+   ============================================================ */
+@media (prefers-reduced-transparency: reduce),(prefers-contrast: more){
+  .glass,.btn-secondary,.motion-toggle{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .chip,.sentence,.reveal,.stage-svg-frame{background:var(--paper);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .blob{animation:none !important;} .cursor-glow{display:none !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="liquid" aria-hidden="true">
+  <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursor" aria-hidden="true"></div>
+
+<!-- TOP NAV -->
+<nav class="nav" aria-label="Site">
+  <div class="nav-in glass">
+    <a class="brand" href="index.html"><span class="mark">◐</span>Dual&nbsp;Code</a>
+    <a class="nav-back" href="index.html">← All tools</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header glass">
+    <p class="eyebrow">Physics · Atomic structure · Dual-coding</p>
+    <h1 class="tool-title">Inside the <span class="grad">Atom</span></h1>
+    <p class="purpose">Two ways to look inside the atom. See how scientists <b>changed the model</b> when new evidence appeared — and watch what <b>leaves the nucleus</b> when it decays.</p>
+  </header>
+
+  <!-- MODE TABS -->
+  <nav class="modes glass" role="tablist" aria-label="Choose a mode">
+    <button class="tab spotlight" id="tabA" role="tab" aria-selected="true" aria-controls="modeA">
+      How our model changed
+      <span class="tab-sub">The story of the atom, step by step</span>
+    </button>
+    <button class="tab spotlight" id="tabB" role="tab" aria-selected="false" aria-controls="modeB" tabindex="-1">
+      Radioactive decay
+      <span class="tab-sub">Make a nucleus decay and watch the numbers</span>
+    </button>
+  </nav>
+
+  <!-- =====================================================
+       MODE A — HOW OUR MODEL CHANGED
+       ===================================================== -->
+  <section id="modeA" role="tabpanel" aria-labelledby="tabA">
+    <div class="workspace">
+
+      <!-- STAGE -->
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">The model</span>
+          <div class="legend" id="legendA">
+            <span class="chip electron"><span class="dot"></span>electron −</span>
+            <span class="chip positive"><span class="dot"></span>positive charge +</span>
+          </div>
+        </div>
+        <div class="stage-svg-frame">
+          <button class="motion-toggle" id="motionToggle" type="button" aria-pressed="false" title="Turn electron movement on or off">
+            <span class="mt-dot" aria-hidden="true"></span>Motion:&nbsp;<span class="mt-state">Off</span>
+          </button>
+          <svg id="svgA" viewBox="0 0 600 420" role="img" aria-labelledby="svgAtitle">
+            <title id="svgAtitle">Diagram of the current atomic model</title>
+            <defs>
+              <radialGradient id="pudding" cx="42%" cy="36%" r="70%">
+                <stop offset="0%" stop-color="#D98C8C"/>
+                <stop offset="55%" stop-color="#C06A6A"/>
+                <stop offset="100%" stop-color="#9A4A4A"/>
+              </radialGradient>
+              <radialGradient id="posGrad" cx="38%" cy="32%" r="78%">
+                <stop offset="0%" stop-color="#E6A6A6"/>
+                <stop offset="55%" stop-color="#C06A6A"/>
+                <stop offset="100%" stop-color="#8A3F3F"/>
+              </radialGradient>
+              <radialGradient id="nucGrad" cx="38%" cy="34%" r="75%">
+                <stop offset="0%" stop-color="#5EA0E0"/>
+                <stop offset="55%" stop-color="#185FA5"/>
+                <stop offset="100%" stop-color="#0E3F70"/>
+              </radialGradient>
+              <radialGradient id="elecGrad" cx="36%" cy="32%" r="75%">
+                <stop offset="0%" stop-color="#6E6A62"/>
+                <stop offset="60%" stop-color="#26241F"/>
+                <stop offset="100%" stop-color="#1A1813"/>
+              </radialGradient>
+              <radialGradient id="neutGradA" cx="38%" cy="34%" r="75%">
+                <stop offset="0%" stop-color="#CFCCC4"/>
+                <stop offset="60%" stop-color="#8A877E"/>
+                <stop offset="100%" stop-color="#56534B"/>
+              </radialGradient>
+              <filter id="softGlowA" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="6" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- Scene 0: Plum pudding -->
+            <g id="sceneA0" class="scene">
+              <circle cx="300" cy="210" r="135" fill="url(#pudding)" filter="url(#softGlowA)" opacity=".96"/>
+              <circle cx="300" cy="210" r="135" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2"/>
+              <g id="puddingElectrons"></g>
+              <text x="300" y="382" text-anchor="middle" font-family="Atkinson Hyperlegible" font-size="20" fill="#4A4742">Positive “dough” with electrons dotted through it</text>
+            </g>
+
+            <!-- Scene 1: Nuclear -->
+            <g id="sceneA1" class="scene" style="display:none">
+              <circle cx="300" cy="200" r="160" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="4 8"/>
+              <text x="300" y="50" text-anchor="middle" font-family="Atkinson Hyperlegible" font-size="18" fill="#7A776E">edge of the atom — mostly empty space</text>
+              <g id="nuclearOrbit">
+                <ellipse cx="300" cy="200" rx="150" ry="120" fill="none" stroke="rgba(24,95,165,.18)" stroke-width="1.5"/>
+                <g id="nuclearElec1"><circle r="9" fill="url(#elecGrad)"/></g>
+                <ellipse cx="300" cy="200" rx="120" ry="150" fill="none" stroke="rgba(24,95,165,.14)" stroke-width="1.5"/>
+                <g id="nuclearElec2"><circle r="9" fill="url(#elecGrad)"/></g>
+              </g>
+              <circle cx="300" cy="200" r="22" fill="url(#posGrad)" filter="url(#softGlowA)"/>
+              <text x="300" y="200" text-anchor="middle" dominant-baseline="central" font-family="Lexend" font-weight="700" font-size="16" fill="#fff">+</text>
+              <text x="300" y="372" text-anchor="middle" font-family="Atkinson Hyperlegible" font-size="20" fill="#4A4742">Tiny dense nucleus in the centre — the rest is empty</text>
+            </g>
+
+            <!-- Scene 2: Bohr -->
+            <g id="sceneA2" class="scene" style="display:none">
+              <circle cx="300" cy="200" r="70" fill="none" stroke="rgba(24,95,165,.30)" stroke-width="2"/>
+              <circle cx="300" cy="200" r="125" fill="none" stroke="rgba(24,95,165,.22)" stroke-width="2"/>
+              <g id="bohrShell1"></g>
+              <g id="bohrShell2"></g>
+              <circle cx="300" cy="200" r="26" fill="url(#posGrad)" filter="url(#softGlowA)"/>
+              <text x="300" y="200" text-anchor="middle" dominant-baseline="central" font-family="Lexend" font-weight="700" font-size="17" fill="#fff">+</text>
+              <text x="300" y="372" text-anchor="middle" font-family="Atkinson Hyperlegible" font-size="20" fill="#4A4742">Electrons sit in fixed shells around the nucleus</text>
+            </g>
+
+            <!-- Scene 3: Modern model with neutrons (Chadwick) -->
+            <g id="sceneA3" class="scene" style="display:none">
+              <circle cx="300" cy="200" r="70" fill="none" stroke="rgba(24,95,165,.30)" stroke-width="2"/>
+              <circle cx="300" cy="200" r="125" fill="none" stroke="rgba(24,95,165,.22)" stroke-width="2"/>
+              <g id="chadShell1"></g>
+              <g id="chadShell2"></g>
+              <g id="chadNucleus"></g>
+              <text x="300" y="372" text-anchor="middle" font-family="Atkinson Hyperlegible" font-size="20" fill="#4A4742">Protons and neutrons in the nucleus; electrons in shells</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- EXPLAIN -->
+      <div class="explain glass">
+        <h2 class="section-heading" id="aHeading">Plum pudding model</h2>
+        <div class="card" id="aCard"><!-- filled by JS --></div>
+
+        <div class="seewhy" id="aSeeWhyWrap" hidden>
+          <button class="btn btn-secondary" id="seeWhyBtn" aria-expanded="false" aria-controls="scatterReveal">See why the model changed ↓</button>
+        </div>
+
+        <div class="takeaway" id="aTakeaway">
+          <span class="star">💡</span>
+          <span>Scientists changed the model when new evidence appeared.</span>
+        </div>
+      </div>
+
+      <!-- RAIL -->
+      <div class="rail glass">
+        <span class="rail-title">Step through the story</span>
+        <div class="stepper">
+          <div class="stepdots" id="aDots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+          <span class="step-label" id="aStepLabel">Step 1 of 3</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="aBack" disabled>← Back</button>
+          <button class="btn btn-primary" id="aNext">Next →</button>
+        </div>
+        <button class="btn btn-secondary" id="aReset">↻ Reset</button>
+      </div>
+
+    </div>
+
+    <!-- Full-width widescreen gold-foil experiment (revealed from the Nuclear step) -->
+    <div class="reveal-panel glass" id="scatterReveal" role="region" aria-label="Alpha scattering — the gold foil experiment" hidden>
+      <h3>The gold foil experiment — fire alpha particles at gold</h3>
+      <div class="scatter-counters">
+        <div class="counter deflect">
+          <span class="cnum" id="cntDeflect">0</span>
+          <span class="clab">bounced back / deflected by a nucleus</span>
+        </div>
+        <div class="counter pass">
+          <span class="cnum" id="cntPass">0</span>
+          <span class="clab">passed straight through</span>
+        </div>
+      </div>
+      <div class="mini-frame">
+        <svg id="svgScatter" viewBox="0 0 1000 460" role="img" aria-label="Alpha particles are fired from a source on the left at a strip of gold foil in the middle. Most pass straight through to the detector on the right. A few hit a tiny gold nucleus and bounce back to the detector on the left.">
+          <defs>
+            <radialGradient id="alphaG" cx="35%" cy="32%" r="72%">
+              <stop offset="0%" stop-color="#A6F0CF"/><stop offset="55%" stop-color="#2FA877"/><stop offset="100%" stop-color="#0F6E56"/>
+            </radialGradient>
+            <radialGradient id="goldG" cx="34%" cy="30%" r="74%">
+              <stop offset="0%" stop-color="#FCEEB0"/><stop offset="52%" stop-color="#E3B23C"/><stop offset="100%" stop-color="#A87A14"/>
+            </radialGradient>
+            <filter id="glowS" x="-150%" y="-150%" width="400%" height="400%">
+              <feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- left (bounced-back) detector -->
+          <rect id="detLeft" x="20" y="56" width="34" height="180" rx="10" fill="#3a2e0c" stroke="#E3B23C" stroke-width="1.6"/>
+          <rect id="detLeftGlow" x="20" y="56" width="34" height="180" rx="10" fill="#FFD86B" opacity="0"/>
+          <g id="marksLeft"></g>
+          <text x="37" y="258" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="18" fill="#E8C572">bounce</text>
+          <text x="37" y="280" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="18" fill="#E8C572">detector</text>
+
+          <!-- alpha source -->
+          <g id="alphaSource">
+            <rect x="70" y="206" width="52" height="48" rx="9" fill="#173a30" stroke="#2FA877" stroke-width="1.6"/>
+            <text x="96" y="232" text-anchor="middle" dominant-baseline="central" font-family="Lexend" font-weight="700" font-size="20" fill="#A6F0CF">α</text>
+            <text x="96" y="282" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="18" fill="#A6F0CF">source</text>
+          </g>
+
+          <!-- gold foil -->
+          <g id="foilAtoms"></g>
+          <text x="500" y="436" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="19" fill="#E8C572">gold foil</text>
+
+          <!-- right (straight-through) detector -->
+          <rect id="detRight" x="946" y="56" width="34" height="348" rx="10" fill="#0d2b22" stroke="#2FA877" stroke-width="1.6"/>
+          <rect id="detRightGlow" x="946" y="56" width="34" height="348" rx="10" fill="#7BE8BE" opacity="0"/>
+          <g id="marksRight"></g>
+          <text x="963" y="426" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="18" fill="#8FE7C4">pass</text>
+          <text x="963" y="448" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="18" fill="#8FE7C4">detector</text>
+
+          <!-- moving particles -->
+          <g id="alphaTracks"></g>
+        </svg>
+      </div>
+      <p class="cap">Most alpha particles pass straight through the empty space and reach the detector on the right. A few pass close to the tiny, dense <b>gold nucleus</b> and are pushed right back to the detector on the left — that is how Rutherford knew the nucleus was there.</p>
+      <div class="scatter-btns">
+        <button class="btn btn-primary" id="scatterFire">Fire particles →</button>
+        <button class="btn btn-secondary" id="scatterClear">↻ Clear count</button>
+      </div>
+      <span class="sr-only" aria-live="polite" id="scatterLive"></span>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       MODE B — RADIOACTIVE DECAY
+       ===================================================== -->
+  <section id="modeB" role="tabpanel" aria-labelledby="tabB" hidden>
+    <div class="workspace">
+
+      <!-- STAGE -->
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Write the balanced equation</span>
+          <span class="decay-badge alpha" id="decayBadge">Alpha decay (α)</span>
+        </div>
+
+        <div class="b-stage-inner">
+          <div class="pt-wrap">
+            <div class="pt-axis">the periodic table — atomic number increases →</div>
+            <div class="pt-strip" id="ptStrip">
+              <div class="hop-arrow" id="hopArrow"><span class="hop-label"></span><span class="hop-line"></span><span class="hop-head"></span></div>
+            </div>
+          </div>
+
+          <div class="equation" id="equation" aria-hidden="true">
+            <div class="nuclide parent" id="eqParent"></div>
+            <span class="op">→</span>
+            <div class="nuclide daughter unknown" id="eqDaughter"></div>
+            <span class="op">+</span>
+            <div class="nuclide particle" id="eqParticle"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPLAIN -->
+      <div class="explain glass">
+        <h2 class="section-heading" id="bHeading">Americium-241 decays by alpha emission</h2>
+        <div class="rule-card alpha" id="ruleCard"></div>
+        <div class="balance" id="balanceCard" hidden></div>
+        <div class="sentence info" id="bSentence" role="status">
+          <span class="ico" id="bIco">i</span>
+          <span id="bText">Read the decay, picture where the element sits on the periodic table, then press <b>Reveal</b> to balance the equation.</span>
+        </div>
+        <div class="takeaway">
+          <span class="star">💡</span>
+          <span>Balance both numbers: the mass numbers must add up, and the atomic numbers must add up.</span>
+        </div>
+      </div>
+
+      <!-- RAIL -->
+      <div class="rail glass">
+        <span class="rail-title">Choose a decay</span>
+        <select class="decay-select" id="decaySelect" aria-label="Choose which decay to write the equation for"></select>
+        <button class="btn btn-primary" id="bReveal">Reveal the answer →</button>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="bPrev">◀ Previous</button>
+          <button class="btn btn-secondary" id="bNext">Next ▶</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <p class="footnote">Calm, reversible, no timers. Nothing moves until you press a button. Built on the SEND-first dual-coding design system.</p>
+</div>
+
+<!-- live regions -->
+<div class="sr-only" aria-live="polite" id="liveA"></div>
+<div class="sr-only" aria-live="polite" id="liveB"></div>
+
+<script>
+"use strict";
+const $ = (id)=>document.getElementById(id);
+const SVGNS="http://www.w3.org/2000/svg";
+const reduced = ()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE='cubic-bezier(0.4,0,0.2,1)';
+function el(name,attrs={}){const e=document.createElementNS(SVGNS,name);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function wait(ms){return new Promise(r=>setTimeout(r, reduced()?0:ms));}
+/* Promise wrapper for the Web Animations API that respects reduced motion */
+function anim(node,frames,opts){
+  const o=Object.assign({easing:EASE,fill:'forwards'},opts);
+  if(reduced()) o.duration=1;
+  const a=node.animate(frames,o);
+  return a.finished.catch(()=>{});
+}
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+const tabA=$('tabA'),tabB=$('tabB'),paneA=$('modeA'),paneB=$('modeB');
+function selectTab(which){
+  const aSel=which==='A';
+  tabA.setAttribute('aria-selected',aSel); tabB.setAttribute('aria-selected',!aSel);
+  tabA.tabIndex=aSel?0:-1; tabB.tabIndex=aSel?-1:0;
+  paneA.hidden=!aSel; paneB.hidden=aSel;
+}
+tabA.addEventListener('click',()=>selectTab('A'));
+tabB.addEventListener('click',()=>selectTab('B'));
+[tabA,tabB].forEach(t=>t.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();selectTab(t===tabA?'B':'A');(t===tabA?tabB:tabA).focus();}
+}));
+
+/* ============================================================
+   MODE A — evolving model
+   ============================================================ */
+const MODELS=[
+  {heading:"Plum pudding model",era:"≈ 1904 · J.J. Thomson",
+   exp:"J.J. Thomson discovered the electron — a tiny negative particle inside every atom.",
+   chg:"The atom was pictured as a ball of positive “dough” with electrons dotted through it, like plums in a pudding.",
+   say:"Step 1 of 4. Plum pudding model by J.J. Thomson: positive dough with electrons inside it."},
+  {heading:"Nuclear model",era:"1911 · Ernest Rutherford",
+   exp:"Rutherford’s team fired alpha particles at thin gold foil. Most went straight through, but a few bounced right back.",
+   chg:"Almost all the mass and the positive charge must sit in a tiny central nucleus. The rest of the atom is empty space.",
+   say:"Step 2 of 4. Nuclear model: a tiny dense nucleus with mostly empty space around it."},
+  {heading:"Bohr model",era:"1913 · Niels Bohr",
+   exp:"Bohr showed electrons can only sit at certain fixed energy levels, not just anywhere.",
+   chg:"Electrons orbit the nucleus in fixed shells. This explained patterns of light that atoms give out.",
+   say:"Step 3 of 4. Bohr model: electrons orbit the nucleus in fixed shells."},
+  {heading:"Modern model — with neutrons",era:"1932 · James Chadwick",
+   exp:"James Chadwick discovered the neutron — a particle in the nucleus with mass but no charge.",
+   chg:"The nucleus now holds protons and neutrons, with electrons in shells around it. Neutrons explain the atom’s extra mass and why atoms of one element can have different masses (isotopes).",
+   say:"Step 4 of 4. Modern model by James Chadwick: the nucleus contains protons and neutrons, with electrons in shells."}
+];
+let aStep=0;
+const scenes=[$('sceneA0'),$('sceneA1'),$('sceneA2'),$('sceneA3')];
+
+function buildPuddingElectrons(){
+  const g=$('puddingElectrons'); g.innerHTML='';
+  const spots=[[250,165],[330,150],[290,210],[230,250],[345,255],[300,300],[370,200],[250,300],[315,170]];
+  spots.forEach(([x,y])=>{
+    const e=el('circle',{cx:x,cy:y,r:9,fill:'url(#elecGrad)'});
+    g.appendChild(e);
+    const t=el('text',{x:x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-size':9,fill:'#fff','font-weight':700}); t.textContent='−';
+    g.appendChild(t);
+  });
+}
+function placeElectrons(g,r,n,start){
+  g.innerHTML='';
+  for(let i=0;i<n;i++){
+    const a=start+i*(2*Math.PI/n);
+    const x=300+Math.cos(a)*r, y=200+Math.sin(a)*r;
+    g.appendChild(el('circle',{cx:x,cy:y,r:9,fill:'url(#elecGrad)'}));
+    const t=el('text',{x:x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-size':9,fill:'#fff','font-weight':700}); t.textContent='−';
+    g.appendChild(t);
+  }
+}
+function buildBohr(){
+  placeElectrons($('bohrShell1'),70,2,-Math.PI/2);
+  placeElectrons($('bohrShell2'),125,8,-Math.PI/2);
+}
+/* Modern model (Chadwick): nucleus of protons + neutrons, electrons in shells (Lithium-style: 3p, 4n, 2+1 e) */
+function buildChadwick(){
+  placeElectrons($('chadShell1'),70,2,-Math.PI/2);
+  placeElectrons($('chadShell2'),125,1,-Math.PI/2);
+  const g=$('chadNucleus'); g.innerHTML='';
+  const nucleon=(x,y,type)=>{
+    g.appendChild(el('circle',{cx:x,cy:y,r:12,fill:type==='p'?'url(#posGrad)':'url(#neutGradA)',stroke:'rgba(255,255,255,.4)','stroke-width':1}));
+    const t=el('text',{x:x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':11,fill:type==='p'?'#fff':'#2E2B25'});
+    t.textContent = type==='p'?'+':'n';
+    g.appendChild(t);
+  };
+  const cx=300, cy=200, R=21;
+  nucleon(cx,cy,'p');
+  [['p',0],['n',60],['n',120],['p',180],['n',240],['n',300]].forEach(([type,deg])=>{
+    const a=deg*Math.PI/180; nucleon(cx+Math.cos(a)*R, cy+Math.sin(a)*R, type);
+  });
+}
+/* gentle, meaningful orbital motion (electrons move around the nucleus) */
+/* Electrons are STATIONARY by default. The "Motion" toggle (corner of the stage)
+   turns the orbiting on or off — an explicit, reversible user trigger. */
+let orbitsOn=false;
+function setStaticPositions(){
+  const o1=$('nuclearElec1'),o2=$('nuclearElec2');
+  if(o1) o1.setAttribute('transform','translate(450,200)');   // resting on its orbit (angle 0)
+  if(o2) o2.setAttribute('transform','translate(300,350)');   // resting on its orbit (angle 90)
+  const s1=$('bohrShell1'),s2=$('bohrShell2');
+  if(s1) s1.setAttribute('transform','rotate(0 300 200)');
+  if(s2) s2.setAttribute('transform','rotate(0 300 200)');
+  const c1=$('chadShell1'),c2=$('chadShell2');
+  if(c1) c1.setAttribute('transform','rotate(0 300 200)');
+  if(c2) c2.setAttribute('transform','rotate(0 300 200)');
+}
+function orbitLoop(){
+  if(!orbitsOn) return;
+  const t=performance.now();
+  const o1=$('nuclearElec1'),o2=$('nuclearElec2');
+  if(o1){ const a=(t/9000)*2*Math.PI;            o1.setAttribute('transform',`translate(${300+Math.cos(a)*150},${200+Math.sin(a)*120})`); }
+  if(o2){ const a=(t/11000)*2*Math.PI+Math.PI/2; o2.setAttribute('transform',`translate(${300+Math.cos(a)*120},${200+Math.sin(a)*150})`); }
+  const s1=$('bohrShell1'),s2=$('bohrShell2');
+  if(s1) s1.setAttribute('transform',`rotate(${(t/26000)*360} 300 200)`);
+  if(s2) s2.setAttribute('transform',`rotate(${-(t/40000)*360} 300 200)`);
+  const c1=$('chadShell1'),c2=$('chadShell2');
+  if(c1) c1.setAttribute('transform',`rotate(${(t/30000)*360} 300 200)`);
+  if(c2) c2.setAttribute('transform',`rotate(${-(t/46000)*360} 300 200)`);
+  requestAnimationFrame(orbitLoop);
+}
+function setOrbits(on){
+  orbitsOn=on;
+  const btn=$('motionToggle');
+  if(btn){
+    btn.setAttribute('aria-pressed', on);
+    btn.classList.toggle('on', on);
+    btn.querySelector('.mt-state').textContent = on ? 'On' : 'Off';
+  }
+  $('liveA').textContent = on ? 'Electron movement turned on.' : 'Electron movement turned off. Electrons are now stationary.';
+  if(on){ requestAnimationFrame(orbitLoop); } else { setStaticPositions(); }
+}
+
+function renderA(){
+  const m=MODELS[aStep];
+  scenes.forEach((s,i)=>{ s.style.display = i===aStep?'block':'none'; });
+  // fade the active scene in
+  if(!reduced()) anim(scenes[aStep],[{opacity:0,transform:'scale(.97)'},{opacity:1,transform:'scale(1)'}],{duration:450});
+  $('aHeading').textContent=m.heading;
+  $('aCard').innerHTML=`
+    <span class="era">${m.era}</span>
+    <div class="field"><span class="label">The experiment</span><span class="value">${m.exp}</span></div>
+    <hr class="divider">
+    <div class="field"><span class="label">What changed</span><span class="value">${m.chg}</span></div>`;
+  // step indicator
+  [...$('aDots').children].forEach((d,i)=>d.classList.toggle('on',i===aStep));
+  $('aStepLabel').textContent=`Step ${aStep+1} of ${MODELS.length}`;
+  $('aBack').disabled=aStep===0;
+  $('aNext').disabled=aStep===MODELS.length-1;
+  // legend adapts: the modern model shows protons + neutrons separately
+  $('legendA').innerHTML = aStep===3
+    ? '<span class="chip electron"><span class="dot"></span>electron −</span><span class="chip positive"><span class="dot"></span>proton +</span><span class="chip neutron"><span class="dot"></span>neutron</span>'
+    : '<span class="chip electron"><span class="dot"></span>electron −</span><span class="chip positive"><span class="dot"></span>positive charge +</span>';
+  // see-why only on the nuclear step
+  $('aSeeWhyWrap').hidden = aStep!==1;
+  if(aStep!==1){ $('scatterReveal').hidden=true; $('seeWhyBtn').setAttribute('aria-expanded','false'); $('seeWhyBtn').textContent='See why the model changed ↓'; }
+  // motion toggle only where electrons can orbit (not plum pudding)
+  $('motionToggle').hidden = aStep===0;
+  $('liveA').textContent=m.say;
+  svgA.setAttribute('aria-label', m.heading+'. '+m.chg);
+}
+const svgA=$('svgA');
+$('aNext').addEventListener('click',()=>{ if(aStep<MODELS.length-1){aStep++;renderA();}});
+$('aBack').addEventListener('click',()=>{ if(aStep>0){aStep--;renderA();}});
+$('aReset').addEventListener('click',()=>{ aStep=0;renderA();});
+
+/* See-why reveal + gold-foil scattering experiment */
+$('seeWhyBtn').addEventListener('click',()=>{
+  const r=$('scatterReveal');
+  const willOpen=r.hidden;
+  r.hidden=!willOpen;
+  $('seeWhyBtn').setAttribute('aria-expanded',willOpen);
+  $('seeWhyBtn').textContent=willOpen?'Hide the experiment ↑':'See why the model changed ↓';
+  if(willOpen){ buildScatter(); clearScatter(); r.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'nearest'}); }
+});
+
+let scatterCounts={pass:0,deflect:0};
+function buildScatter(){
+  const g=$('foilAtoms'); g.innerHTML='';
+  const foilX=500;
+  for(let y=74;y<=386;y+=44){
+    g.appendChild(el('circle',{cx:foilX,cy:y,r:18,fill:'none',stroke:'rgba(227,178,60,.22)','stroke-width':1.5}));
+    g.appendChild(el('circle',{cx:foilX,cy:y,r:6,fill:'url(#goldG)'}));
+  }
+  $('alphaTracks').innerHTML='';
+}
+function clearScatter(){
+  scatterCounts={pass:0,deflect:0};
+  $('cntPass').textContent='0'; $('cntDeflect').textContent='0';
+  $('marksLeft').innerHTML=''; $('marksRight').innerHTML=''; $('alphaTracks').innerHTML='';
+  $('scatterFire').textContent='Fire particles →';
+  $('scatterLive').textContent='Counts cleared.';
+}
+function mkAlpha(x,y){
+  const c=el('circle',{r:7,fill:'url(#alphaG)',filter:'url(#glowS)'});
+  c.setAttribute('transform',`translate(${x},${y})`);
+  return c;
+}
+function flashDet(node){ if(node) anim(node,[{opacity:0},{opacity:.85},{opacity:0}],{duration:650}); }
+function hitRight(y){
+  scatterCounts.pass++; $('cntPass').textContent=scatterCounts.pass;
+  $('marksRight').appendChild(el('circle',{cx:963,cy:y,r:4,fill:'#7BE8BE',opacity:.95}));
+  flashDet($('detRightGlow'));
+}
+function hitLeft(y){
+  scatterCounts.deflect++; $('cntDeflect').textContent=scatterCounts.deflect;
+  $('marksLeft').appendChild(el('circle',{cx:37,cy:y,r:4,fill:'#FFD86B',opacity:.98}));
+  flashDet($('detLeftGlow'));
+}
+async function fireScatter(){
+  const btn=$('scatterFire'); btn.disabled=true; $('scatterClear').disabled=true;
+  const tracks=$('alphaTracks');
+  const sx=120, sy=230;
+  const proms=[];
+  // five that pass straight through, slowly, to the right detector
+  for(let i=0;i<5;i++){
+    const startY=sy+(Math.random()*18-9);
+    const endY=95+Math.random()*265;
+    const p=mkAlpha(sx,startY); tracks.appendChild(p);
+    proms.push((async()=>{
+      await anim(p,[{transform:`translate(${sx}px,${startY}px)`},{transform:`translate(940px,${endY}px)`}],{duration:3000,delay:i*220,easing:'linear'});
+      p.remove(); hitRight(endY);
+    })());
+  }
+  // one that strikes a nucleus and bounces back to the left detector
+  {
+    const foilY=180+Math.random()*70;
+    const endY=85+Math.random()*130;
+    const p=mkAlpha(sx,sy); tracks.appendChild(p);
+    proms.push((async()=>{
+      await anim(p,[
+        {transform:`translate(${sx}px,${sy}px)`,offset:0},
+        {transform:`translate(488px,${foilY}px)`,offset:.55},
+        {transform:`translate(54px,${endY}px)`,offset:1}
+      ],{duration:3400,delay:300,easing:'linear'});
+      p.remove(); hitLeft(endY);
+    })());
+  }
+  await Promise.all(proms);
+  btn.disabled=false; $('scatterClear').disabled=false;
+  btn.textContent='Fire more particles →';
+  $('scatterLive').textContent=`${scatterCounts.pass} passed straight through, ${scatterCounts.deflect} bounced back.`;
+}
+$('scatterFire').addEventListener('click',fireScatter);
+$('scatterClear').addEventListener('click',clearScatter);
+
+/* ============================================================
+   MODE B — writing balanced decay equations (periodic-table dual code)
+   ============================================================ */
+const PT={1:['H','Hydrogen'],2:['He','Helium'],3:['Li','Lithium'],4:['Be','Beryllium'],5:['B','Boron'],6:['C','Carbon'],7:['N','Nitrogen'],8:['O','Oxygen'],9:['F','Fluorine'],10:['Ne','Neon'],11:['Na','Sodium'],12:['Mg','Magnesium'],13:['Al','Aluminium'],14:['Si','Silicon'],15:['P','Phosphorus'],16:['S','Sulfur'],17:['Cl','Chlorine'],18:['Ar','Argon'],19:['K','Potassium'],20:['Ca','Calcium'],21:['Sc','Scandium'],22:['Ti','Titanium'],23:['V','Vanadium'],24:['Cr','Chromium'],25:['Mn','Manganese'],26:['Fe','Iron'],27:['Co','Cobalt'],28:['Ni','Nickel'],29:['Cu','Copper'],30:['Zn','Zinc'],31:['Ga','Gallium'],32:['Ge','Germanium'],33:['As','Arsenic'],34:['Se','Selenium'],35:['Br','Bromine'],36:['Kr','Krypton'],37:['Rb','Rubidium'],38:['Sr','Strontium'],39:['Y','Yttrium'],40:['Zr','Zirconium'],41:['Nb','Niobium'],42:['Mo','Molybdenum'],43:['Tc','Technetium'],44:['Ru','Ruthenium'],45:['Rh','Rhodium'],46:['Pd','Palladium'],47:['Ag','Silver'],48:['Cd','Cadmium'],49:['In','Indium'],50:['Sn','Tin'],51:['Sb','Antimony'],52:['Te','Tellurium'],53:['I','Iodine'],54:['Xe','Xenon'],55:['Cs','Caesium'],56:['Ba','Barium'],57:['La','Lanthanum'],58:['Ce','Cerium'],59:['Pr','Praseodymium'],60:['Nd','Neodymium'],61:['Pm','Promethium'],62:['Sm','Samarium'],63:['Eu','Europium'],64:['Gd','Gadolinium'],65:['Tb','Terbium'],66:['Dy','Dysprosium'],67:['Ho','Holmium'],68:['Er','Erbium'],69:['Tm','Thulium'],70:['Yb','Ytterbium'],71:['Lu','Lutetium'],72:['Hf','Hafnium'],73:['Ta','Tantalum'],74:['W','Tungsten'],75:['Re','Rhenium'],76:['Os','Osmium'],77:['Ir','Iridium'],78:['Pt','Platinum'],79:['Au','Gold'],80:['Hg','Mercury'],81:['Tl','Thallium'],82:['Pb','Lead'],83:['Bi','Bismuth'],84:['Po','Polonium'],85:['At','Astatine'],86:['Rn','Radon'],87:['Fr','Francium'],88:['Ra','Radium'],89:['Ac','Actinium'],90:['Th','Thorium'],91:['Pa','Protactinium'],92:['U','Uranium'],93:['Np','Neptunium'],94:['Pu','Plutonium'],95:['Am','Americium']};
+const ZSYM=z=>(PT[z]||['?','?'])[0];
+const ZNAME=z=>(PT[z]||['?','unknown'])[1];
+
+/* The specified decays — straight from the worksheet, plus two gamma examples */
+const DECAYS=[
+  {z:95,a:241,type:'alpha'}, {z:83,a:211,type:'alpha'}, {z:84,a:204,type:'alpha'},
+  {z:86,a:224,type:'alpha'}, {z:92,a:235,type:'alpha'}, {z:93,a:237,type:'alpha'},
+  {z:6,a:14,type:'beta'},   {z:38,a:90,type:'beta'},   {z:15,a:32,type:'beta'},
+  {z:28,a:63,type:'beta'},  {z:82,a:209,type:'beta'},  {z:1,a:3,type:'beta'},
+  {z:92,a:238,type:'gamma'},{z:43,a:99,type:'gamma'}
+];
+const PARTICLE={alpha:{a:4,z:2,el:'α',name:'alpha particle'},beta:{a:0,z:-1,el:'β',name:'beta particle'},gamma:{a:0,z:0,el:'γ',name:'gamma ray'}};
+const BADGE={alpha:'Alpha decay (α)',beta:'Beta decay (β)',gamma:'Gamma decay (γ)'};
+
+function daughter(d){
+  if(d.type==='alpha') return {z:d.z-2,a:d.a-4};
+  if(d.type==='beta')  return {z:d.z+1,a:d.a};
+  return {z:d.z,a:d.a}; // gamma — no change
+}
+function setNuclide(node,a,z,elTxt){
+  node.innerHTML=`<span class="nums"><span class="a">${a}</span><span class="zz">${z}</span></span><span class="el">${elTxt}</span>`;
+}
+function setSentence(text,kind){
+  const s=$('bSentence'),ico=$('bIco');
+  s.className='sentence '+kind;
+  ico.textContent = kind==='good'?'✓':kind==='warn'?'↻':'i';
+  $('bText').innerHTML=text;
+  $('liveB').textContent=text.replace(/<[^>]+>/g,'');
+}
+
+let bIndex=0, bRevealed=false;
+
+function buildDecayOptions(){
+  const sel=$('decaySelect'); sel.innerHTML='';
+  const labels={alpha:'Alpha (α) decay',beta:'Beta (β) decay',gamma:'Gamma (γ) decay'};
+  ['alpha','beta','gamma'].forEach(t=>{
+    const og=document.createElement('optgroup'); og.label=labels[t];
+    DECAYS.forEach((d,i)=>{ if(d.type===t){
+      const o=document.createElement('option'); o.value=i;
+      o.textContent=`${ZNAME(d.z)}-${d.a} decays by ${t} emission`;
+      og.appendChild(o);
+    }});
+    sel.appendChild(og);
+  });
+}
+function renderStrip(){
+  const d=DECAYS[bIndex], dg=daughter(d), strip=$('ptStrip');
+  [...strip.querySelectorAll('.pt-tile')].forEach(t=>t.remove());
+  const arrow=$('hopArrow'); arrow.classList.remove('show'); arrow.style.opacity='0'; arrow.style.display='block';
+  const lo=Math.max(1, Math.min(d.z,dg.z)-2);
+  const hi=Math.min(95, Math.max(d.z,dg.z)+2);
+  for(let z=lo;z<=hi;z++){
+    const tile=document.createElement('div'); tile.className='pt-tile'; tile.id='pt-z'+z;
+    tile.innerHTML=`<span class="z">${z}</span><span class="sym">${ZSYM(z)}</span><span class="nm">${ZNAME(z)}</span>`;
+    if(z===d.z) tile.classList.add('parent');
+    strip.appendChild(tile);
+  }
+}
+function showHop(){
+  const d=DECAYS[bIndex], dg=daughter(d), arrow=$('hopArrow');
+  if(dg.z===d.z){ arrow.style.display='none'; return; }
+  const strip=$('ptStrip'), pEl=$('pt-z'+d.z), cEl=$('pt-z'+dg.z);
+  if(!pEl||!cEl){ arrow.style.display='none'; return; }
+  const sr=strip.getBoundingClientRect(), pr=pEl.getBoundingClientRect(), cr=cEl.getBoundingClientRect();
+  const x1=pr.left+pr.width/2-sr.left, x2=cr.left+cr.width/2-sr.left;
+  arrow.style.display='block';
+  arrow.style.left=Math.min(x1,x2)+'px';
+  arrow.style.width=Math.abs(x2-x1)+'px';
+  arrow.dataset.dir = x2>x1?'right':'left';
+  const diff=dg.z-d.z;
+  arrow.querySelector('.hop-label').textContent=(diff>0?'+':'')+diff+' place'+(Math.abs(diff)>1?'s':'');
+  arrow.classList.remove('show'); void arrow.offsetWidth; arrow.classList.add('show');
+}
+function renderRule(type){
+  const rc=$('ruleCard'); rc.className='rule-card '+type;
+  const data={
+    alpha:{g:'α',t:'Alpha (α) is a helium nucleus, ⁴₂He',items:['Mass number goes <b>down by 4</b>','Atomic number goes <b>down by 2</b>','The element moves <b>2 places left</b> on the table']},
+    beta:{g:'β',t:'Beta (β) is an electron from the nucleus, ⁰₋₁e',items:['A neutron turns into a proton','Mass number <b>stays the same</b>','Atomic number goes <b>up by 1</b>','The element moves <b>1 place right</b> on the table']},
+    gamma:{g:'γ',t:'Gamma (γ) is energy only, ⁰₀γ',items:['No mass and no charge leave','Mass number <b>does not change</b>','Atomic number <b>does not change</b>','The element <b>stays in the same place</b>']}
+  }[type];
+  rc.innerHTML=`<div class="rl-title"><span class="badge">${data.g}</span>${data.t}</div><ul>${data.items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+function setDecay(i){
+  bIndex=(i+DECAYS.length)%DECAYS.length;
+  bRevealed=false;
+  const d=DECAYS[bIndex], p=PARTICLE[d.type];
+  $('decaySelect').value=bIndex;
+  const badge=$('decayBadge'); badge.className='decay-badge '+d.type; badge.textContent=BADGE[d.type];
+  $('bHeading').textContent=`${ZNAME(d.z)}-${d.a} decays by ${d.type} emission`;
+  renderStrip();
+  setNuclide($('eqParent'),d.a,d.z,ZSYM(d.z));
+  const part=$('eqParticle'); part.className='nuclide particle'; setNuclide(part,p.a,p.z,p.el);
+  const dau=$('eqDaughter'); dau.className='nuclide daughter unknown';
+  dau.innerHTML=`<span class="nums"><span class="a">?</span><span class="zz">?</span></span><span class="el">?</span>`;
+  renderRule(d.type);
+  $('balanceCard').hidden=true; $('balanceCard').innerHTML='';
+  const art = d.type==='alpha' ? 'an' : 'a';
+  setSentence(`<b>${ZNAME(d.z)}-${d.a}</b> gives out ${art} <b>${p.name}</b>. What does it turn into? Press <b>Reveal</b> to balance the numbers.`,'info');
+  $('bReveal').textContent='Reveal the answer →';
+  $('liveB').textContent=`${ZNAME(d.z)}-${d.a} decays by ${d.type} emission. Predict the daughter, then reveal.`;
+}
+function revealAnswer(){
+  const d=DECAYS[bIndex], p=PARTICLE[d.type], dg=daughter(d);
+  const dau=$('eqDaughter'); dau.className='nuclide daughter reveal-pop';
+  setNuclide(dau,dg.a,dg.z,ZSYM(dg.z));
+  const cEl=$('pt-z'+dg.z);
+  if(cEl && dg.z!==d.z) cEl.classList.add('daughter');
+  showHop();
+  const zsign=v=>v<0?`(${v})`:`${v}`;
+  const bc=$('balanceCard'); bc.hidden=false;
+  bc.innerHTML=
+    `<div class="bl"><span class="tick">✓</span><span class="lbl">Mass numbers</span> ${d.a} = ${dg.a} + ${p.a}</div>`+
+    `<div class="bl"><span class="tick">✓</span><span class="lbl">Atomic numbers</span> ${d.z} = ${dg.z} + ${zsign(p.z)}</div>`;
+  const chg = d.type==='alpha' ? `Mass number ${d.a} → ${dg.a} (−4). Atomic number ${d.z} → ${dg.z} (−2).`
+            : d.type==='beta'  ? `Mass number stays ${d.a}. Atomic number ${d.z} → ${dg.z} (+1).`
+            : `The mass number and atomic number both stay the same.`;
+  const lead = d.type==='gamma'
+            ? `<b>${ZNAME(d.z)}-${d.a}</b> gives out energy and stays as <b>${ZNAME(dg.z)}-${dg.a}</b>.`
+            : `<b>${ZNAME(d.z)}-${d.a}</b> becomes <b>${ZNAME(dg.z)}-${dg.a}</b>.`;
+  setSentence(`${lead} ${chg}`,'good');
+  bRevealed=true; $('bReveal').textContent='Hide the answer';
+  $('liveB').textContent=`${lead.replace(/<[^>]+>/g,'')} ${chg}`;
+}
+
+$('decaySelect').addEventListener('change',e=>setDecay(parseInt(e.target.value,10)));
+$('bReveal').addEventListener('click',()=>{ if(bRevealed) setDecay(bIndex); else revealAnswer(); });
+$('bPrev').addEventListener('click',()=>setDecay(bIndex-1));
+$('bNext').addEventListener('click',()=>setDecay(bIndex+1));
+
+/* Motion toggle for the atom models */
+$('motionToggle').addEventListener('click',()=>setOrbits(!orbitsOn));
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildPuddingElectrons();
+buildBohr();
+buildChadwick();
+renderA();
+setOrbits(false);   // electrons start stationary; user opts into motion
+buildDecayOptions();
+setDecay(0);
+
+/* ---- Liquid styling: cursor follow + spotlight (decorative; off for reduced-motion/touch) ---- */
+document.querySelectorAll('.spotlight').forEach(elm=>{
+  elm.addEventListener('pointermove',e=>{
+    const r=elm.getBoundingClientRect();
+    elm.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    elm.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+if(!reduced() && window.matchMedia('(pointer:fine)').matches){
+  const cur=$('cursor');
+  let tx=innerWidth/2, ty=innerHeight/2, cx=tx, cy=ty;
+  addEventListener('pointermove',e=>{ tx=e.clientX; ty=e.clientY; },{passive:true});
+  (function loop(){ cx+=(tx-cx)*0.12; cy+=(ty-cy)*0.12;
+    cur.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+    requestAnimationFrame(loop); })();
+}else{ const c=$('cursor'); if(c) c.style.display='none'; }
+</script>
+</body>
+</html>
