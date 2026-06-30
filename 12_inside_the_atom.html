@@ -284,7 +284,7 @@ svg{width:100%;height:100%;display:block;}
 .pt-tile{flex:1 1 0;max-width:130px;min-width:60px;border:2px solid var(--line);border-radius:12px;background:rgba(255,255,255,.7);
   padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;
   transition:transform .35s cubic-bezier(.4,0,.2,1),border-color .35s,background .35s,box-shadow .35s;}
-.pt-tile .z{font-family:'Lexend';font-weight:600;font-size:1rem;color:var(--ink-soft);align-self:flex-start;}
+.pt-tile .z{font-family:'Lexend';font-weight:600;font-size:1rem;color:var(--ink-soft);align-self:flex-start;margin-top:auto;}
 .pt-tile .sym{font-family:'Lexend';font-weight:700;font-size:clamp(1.6rem,3vw,2.4rem);line-height:1;}
 .pt-tile .nm{font-size:.82rem;color:var(--ink-soft);text-align:center;line-height:1.1;}
 .pt-tile.parent{border-color:var(--blue);background:rgba(24,95,165,.12);box-shadow:0 6px 18px rgba(24,95,165,.18);}
@@ -1195,7 +1195,7 @@ function renderStrip(){
   const hi=Math.min(95, Math.max(d.z,dg.z)+2);
   for(let z=lo;z<=hi;z++){
     const tile=document.createElement('div'); tile.className='pt-tile'; tile.id='pt-z'+z;
-    tile.innerHTML=`<span class="z">${z}</span><span class="sym">${ZSYM(z)}</span><span class="nm">${ZNAME(z)}</span>`;
+    tile.innerHTML=`<span class="sym">${ZSYM(z)}</span><span class="nm">${ZNAME(z)}</span><span class="z">${z}</span>`;
     if(z===d.z) tile.classList.add('parent');
     strip.appendChild(tile);
   }
