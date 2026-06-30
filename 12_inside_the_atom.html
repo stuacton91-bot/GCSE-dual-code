@@ -118,7 +118,8 @@ p{margin:0;}
 .spotlight:hover::before{opacity:1;}
 
 /* Mode tabs — large & unmistakable */
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px;}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:10px;}
+@media(max-width:760px){.modes{grid-template-columns:1fr;}}
 .tab{
   font-family:'Lexend',system-ui,sans-serif;font-weight:600;
   font-size:clamp(1rem,1.8vw,1.2rem);
@@ -344,6 +345,87 @@ svg{width:100%;height:100%;display:block;}
   *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
   .blob{animation:none !important;} .cursor-glow{display:none !important;}
 }
+
+/* ============================================================
+   MODE C — HALF-LIFE (graph activity + count-rate calculation)
+   ============================================================ */
+.hl-wrap{display:flex;flex-direction:column;gap:18px;}
+.hl-head{padding:22px 24px;}
+.hl-head .eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--teal);text-transform:uppercase;margin-bottom:6px;}
+.hl-head .purpose{color:var(--ink-soft);max-width:80ch;}
+
+/* angle switcher (the two "angles") */
+.hl-switch{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px;}
+.angle-btn{font-family:'Lexend',system-ui,sans-serif;font-weight:600;font-size:clamp(.98rem,1.5vw,1.12rem);
+  padding:16px 14px;border-radius:14px;cursor:pointer;border:2px solid transparent;background:transparent;color:var(--ink-soft);
+  display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;
+  transition:transform .15s ease, background .2s ease, color .2s ease;}
+.angle-btn small{font-family:'Atkinson Hyperlegible';font-weight:400;font-size:.86rem;color:var(--ink-soft);}
+.angle-btn[aria-selected="true"]{background:var(--teal);color:#fff;box-shadow:0 6px 20px rgba(15,110,86,.30);}
+.angle-btn[aria-selected="true"] small{color:rgba(255,255,255,.92);}
+.angle-btn:hover{transform:translateY(-2px);}
+.angle-btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+@media(max-width:560px){.hl-switch{grid-template-columns:1fr;}}
+
+/* shared two-column layout for each angle */
+.hl-grid{display:grid;gap:18px;grid-template-columns:1.65fr 1fr;align-items:stretch;}
+@media(max-width:900px){.hl-grid{grid-template-columns:1fr;}}
+.hl-main{padding:20px;display:flex;flex-direction:column;gap:14px;min-height:520px;}
+.hl-side{padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+
+/* ---- graph angle ---- */
+.hl-graph-frame{background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:16px;padding:10px 12px;}
+#svgHalf{display:block;width:100%;height:auto;}
+.hl-gridline{stroke:rgba(26,24,19,.10);stroke-width:1;}
+.hl-axis{stroke:var(--ink-soft);stroke-width:2;}
+.hl-tick{font-family:'Atkinson Hyperlegible';font-size:15px;fill:var(--ink-soft);}
+.hl-axislabel{font-family:'Lexend';font-weight:700;font-size:16px;fill:var(--ink);}
+.hl-curve{fill:none;stroke:var(--teal);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 2px 4px rgba(15,110,86,.25));}
+.hl-point{fill:var(--teal);stroke:#fff;stroke-width:2;}
+.hl-guide{stroke:var(--warn);stroke-width:2;stroke-dasharray:6 6;}
+.hl-guidelabel{font-family:'Lexend';font-weight:700;font-size:14px;fill:var(--warn);}
+.hl-pointlabel{font-family:'Lexend';font-weight:700;font-size:15px;fill:var(--teal);}
+.hl-bracket{stroke:var(--blue);stroke-width:2.5;fill:none;}
+.hl-bracketlabel{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:14px;fill:var(--blue);text-anchor:middle;}
+
+.hl-controls{display:flex;flex-wrap:wrap;gap:10px;}
+.hl-controls .btn{flex:1 1 auto;}
+.hl-progress{display:flex;gap:8px;margin-top:2px;}
+.hl-dot{flex:1;height:8px;border-radius:5px;background:var(--paper-2);border:1px solid var(--line);transition:background .3s ease;}
+.hl-dot.on{background:var(--teal);border-color:var(--teal);}
+
+/* ---- count-rate angle (NO graph) ---- */
+.cr-scenario{border-radius:14px;padding:16px 18px;background:linear-gradient(120deg,rgba(24,95,165,.12),rgba(15,110,86,.12));border:1px solid var(--glass-edge);}
+.cr-scenario .iso{font-family:'Lexend';font-weight:700;font-size:1.25rem;color:var(--ink);}
+.cr-scenario .facts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:8px;}
+.cr-scenario .fact{display:flex;flex-direction:column;line-height:1.2;}
+.cr-scenario .fact b{font-family:'Lexend';font-size:1.15rem;color:var(--blue);}
+.cr-scenario .fact span{font-size:.82rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+
+.cr-table{width:100%;border-collapse:collapse;font-family:'Atkinson Hyperlegible';}
+.cr-table th{font-family:'Lexend';font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.03em;
+  color:var(--ink-soft);text-align:left;padding:8px 8px;border-bottom:2px solid var(--line);}
+.cr-table td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.cr-table tr:last-child td{border-bottom:none;}
+.cr-n{font-family:'Lexend';font-weight:700;color:var(--teal);white-space:nowrap;}
+.cr-time{color:var(--ink-soft);white-space:nowrap;}
+.cr-frac{font-family:'Lexend';font-weight:700;color:var(--blue);white-space:nowrap;}
+.cr-input{width:7.5em;font-family:'Atkinson Hyperlegible';font-size:1rem;font-weight:700;
+  padding:7px 10px;border-radius:9px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);color:var(--ink);}
+.cr-input:focus-visible{outline:3px solid var(--focus);outline-offset:1px;}
+.cr-input.ok{border-color:var(--teal);background:rgba(15,110,86,.10);}
+.cr-input.no{border-color:var(--bad);background:rgba(162,59,59,.08);}
+.cr-input.locked{background:var(--paper-2);}
+.cr-status{font-weight:700;font-size:1.1rem;width:1.4em;display:inline-block;}
+.cr-status.ok{color:var(--teal);} .cr-status.no{color:var(--bad);}
+.cr-work{display:block;font-size:.92rem;color:var(--ink-soft);margin-top:3px;}
+.cr-work.hidden{display:none;}
+.cr-unit{font-size:.9rem;color:var(--ink-soft);margin-left:4px;}
+
+.hl-formula{border-radius:14px;padding:14px 16px;background:rgba(24,95,165,.08);border:1px solid rgba(24,95,165,.22);
+  font-family:'Lexend';font-weight:600;text-align:center;color:var(--ink);font-size:1.05rem;}
+.hl-formula b{color:var(--blue);}
+.hl-formula sup{font-size:.72em;}
 </style>
 </head>
 <body>
@@ -368,7 +450,7 @@ svg{width:100%;height:100%;display:block;}
   <header class="header glass">
     <p class="eyebrow">Physics · Atomic structure · Dual-coding</p>
     <h1 class="tool-title">Inside the <span class="grad">Atom</span></h1>
-    <p class="purpose">Two ways to look inside the atom. See how scientists <b>changed the model</b> when new evidence appeared — and watch what <b>leaves the nucleus</b> when it decays.</p>
+    <p class="purpose">Three ways to look inside the atom. See how scientists <b>changed the model</b> when new evidence appeared, watch what <b>leaves the nucleus</b> when it decays, then measure how fast it decays with <b>half-life</b>.</p>
   </header>
 
   <!-- MODE TABS -->
@@ -380,6 +462,10 @@ svg{width:100%;height:100%;display:block;}
     <button class="tab spotlight" id="tabB" role="tab" aria-selected="false" aria-controls="modeB" tabindex="-1">
       Radioactive decay
       <span class="tab-sub">Make a nucleus decay and watch the numbers</span>
+    </button>
+    <button class="tab spotlight" id="tabC" role="tab" aria-selected="false" aria-controls="modeC" tabindex="-1">
+      Half-life
+      <span class="tab-sub">Read it from a graph, then predict the count rate</span>
     </button>
   </nav>
 
@@ -639,12 +725,135 @@ svg{width:100%;height:100%;display:block;}
     </div>
   </section>
 
+  <!-- =====================================================
+       MODE C — HALF-LIFE
+       ===================================================== -->
+  <section id="modeC" role="tabpanel" aria-labelledby="tabC" hidden>
+    <div class="hl-wrap">
+
+      <!-- intro + angle switcher -->
+      <div class="glass hl-head">
+        <p class="eyebrow">Half-life · two angles</p>
+        <h2 class="section-heading">How fast does a sample decay?</h2>
+        <p class="purpose">The <b>half-life</b> is the average time for half of the radioactive nuclei in a sample to decay — the same time it takes the <b>activity</b> (count rate) to halve. Look at it two ways: read it off a decay <b>graph</b>, then <b>predict the count rate</b> after several half-lives with no graph at all.</p>
+      </div>
+
+      <nav class="glass hl-switch" role="tablist" aria-label="Choose how to look at half-life">
+        <button class="angle-btn spotlight" id="angleGraph" role="tab" aria-selected="true" aria-controls="hlAngleGraph">
+          📈 Read it from a graph
+          <small>Build the decay curve, half-life by half-life</small>
+        </button>
+        <button class="angle-btn spotlight" id="angleCount" role="tab" aria-selected="false" aria-controls="hlAngleCount" tabindex="-1">
+          🔢 Count-rate calculation
+          <small>Predict the count rate — no graph</small>
+        </button>
+      </nav>
+
+      <!-- ============ ANGLE 1 — GRAPH ============ -->
+      <div id="hlAngleGraph" role="tabpanel" aria-labelledby="angleGraph">
+        <div class="hl-grid">
+
+          <!-- graph -->
+          <div class="glass hl-main">
+            <div class="stage-head">
+              <span class="stage-title">Decay curve — activity against time</span>
+              <span class="stage-title" id="hlStageStep" style="color:var(--teal)">Step 0 of 4</span>
+            </div>
+            <div class="hl-graph-frame">
+              <svg id="svgHalf" viewBox="0 0 720 500" role="img" aria-label="A graph of activity in becquerel against time in hours. As each half-life passes the activity halves: 1600, 800, 400, 200, 100 becquerel, and every half-life takes the same 6 hours.">
+                <g id="hlGrid"></g>
+                <g id="hlAxes"></g>
+                <g id="hlCurve"></g>
+                <g id="hlGuides"></g>
+                <g id="hlBrackets"></g>
+                <g id="hlPoints"></g>
+              </svg>
+            </div>
+            <div class="hl-progress" aria-hidden="true">
+              <span class="hl-dot" id="hlDot1"></span><span class="hl-dot" id="hlDot2"></span>
+              <span class="hl-dot" id="hlDot3"></span><span class="hl-dot" id="hlDot4"></span>
+            </div>
+            <div class="hl-controls">
+              <button class="btn btn-primary" id="hlNext">Show the 1st half-life →</button>
+              <button class="btn btn-secondary" id="hlReset">↻ Start again</button>
+            </div>
+          </div>
+
+          <!-- explain -->
+          <div class="glass hl-side">
+            <h3 class="section-heading">What just happened</h3>
+            <div class="sentence info" id="hlSentence" role="status">
+              <span class="ico">i</span>
+              <span id="hlText">We start with a fresh sample: activity <b>1600 Bq</b> at time 0. Press the button to let one half-life pass.</span>
+            </div>
+            <div class="takeaway">
+              <span class="star">⏱️</span>
+              <span id="hlTake">Every half-life is <b>exactly the same length of time</b> — here, 6 hours. Each one halves the activity again, no matter how much is left.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============ ANGLE 2 — COUNT RATE (no graph) ============ -->
+      <div id="hlAngleCount" role="tabpanel" aria-labelledby="angleCount" hidden>
+        <div class="hl-grid">
+
+          <!-- exercise -->
+          <div class="glass hl-main">
+            <div class="stage-head">
+              <span class="stage-title">Predict the count rate after each half-life</span>
+            </div>
+            <div class="cr-scenario">
+              <div class="iso" id="crIso">Cobalt-60</div>
+              <div class="facts">
+                <div class="fact"><b id="crHalf">5 years</b><span>half-life</span></div>
+                <div class="fact"><b id="crStart">3200 Bq</b><span>starting count rate</span></div>
+              </div>
+            </div>
+            <table class="cr-table">
+              <thead>
+                <tr><th>Half-lives</th><th>Time passed</th><th>Fraction left</th><th>Your prediction</th><th></th></tr>
+              </thead>
+              <tbody id="crBody"></tbody>
+            </table>
+            <div class="hl-controls">
+              <button class="btn btn-primary" id="crCheck">Check my answers</button>
+              <button class="btn btn-secondary" id="crReveal">Reveal working</button>
+              <button class="btn btn-secondary" id="crNew">New question ↻</button>
+            </div>
+          </div>
+
+          <!-- explain -->
+          <div class="glass hl-side">
+            <h3 class="section-heading">How to work it out</h3>
+            <div class="hl-formula">
+              count rate left = start &times; <b>(&frac12;)<sup>n</sup></b><br>
+              <small style="font-weight:400;color:var(--ink-soft)">where <b>n</b> = number of half-lives</small>
+            </div>
+            <div class="sentence info" role="status">
+              <span class="ico">i</span>
+              <span>No graph needed. Each half-life simply <b>halves</b> the count rate — so just keep dividing by 2. After <b>n</b> half-lives the fraction left is &frac12;<sup>n</sup> (½, ¼, ⅛, 1⁄16, 1⁄32 …).</span>
+            </div>
+            <div class="takeaway">
+              <span class="star">💡</span>
+              <span>Type a prediction for each row, then <b>Check</b>. The count rate can land on a decimal — that is fine, the halving rule still holds.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <p class="footnote">Calm, reversible, no timers. Nothing moves until you press a button. Built on the SEND-first dual-coding design system.</p>
 </div>
 
 <!-- live regions -->
 <div class="sr-only" aria-live="polite" id="liveA"></div>
 <div class="sr-only" aria-live="polite" id="liveB"></div>
+<div class="sr-only" aria-live="polite" id="liveC"></div>
 
 <script>
 "use strict";
@@ -686,18 +895,31 @@ function tween(node,waypoints,duration){
 /* ============================================================
    TAB SWITCHING
    ============================================================ */
-const tabA=$('tabA'),tabB=$('tabB'),paneA=$('modeA'),paneB=$('modeB');
-function selectTab(which){
-  const aSel=which==='A';
-  tabA.setAttribute('aria-selected',aSel); tabB.setAttribute('aria-selected',!aSel);
-  tabA.tabIndex=aSel?0:-1; tabB.tabIndex=aSel?-1:0;
-  paneA.hidden=!aSel; paneB.hidden=aSel;
+const TABS=[
+  {tab:$('tabA'),pane:$('modeA')},
+  {tab:$('tabB'),pane:$('modeB')},
+  {tab:$('tabC'),pane:$('modeC')}
+];
+function selectTab(which){ // which: 0|1|2 or 'A'|'B'|'C'
+  const idx=typeof which==='number'?which:{A:0,B:1,C:2}[which];
+  TABS.forEach((t,i)=>{
+    const sel=i===idx;
+    t.tab.setAttribute('aria-selected',sel);
+    t.tab.tabIndex=sel?0:-1;
+    t.pane.hidden=!sel;
+  });
+  if(idx===2) buildHalfGraph(); // ensure the half-life graph is drawn when revealed
 }
-tabA.addEventListener('click',()=>selectTab('A'));
-tabB.addEventListener('click',()=>selectTab('B'));
-[tabA,tabB].forEach(t=>t.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();selectTab(t===tabA?'B':'A');(t===tabA?tabB:tabA).focus();}
-}));
+TABS.forEach((t,i)=>{
+  t.tab.addEventListener('click',()=>selectTab(i));
+  t.tab.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+      e.preventDefault();
+      const next=(i+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length;
+      selectTab(next); TABS[next].tab.focus();
+    }
+  });
+});
 
 /* ============================================================
    MODE A — evolving model
@@ -1053,6 +1275,222 @@ $('bNext').addEventListener('click',()=>setDecay(bIndex+1));
 $('motionToggle').addEventListener('click',()=>setOrbits(!orbitsOn));
 
 /* ============================================================
+   MODE C — HALF-LIFE
+   ============================================================ */
+
+/* ---- inner angle switcher (graph / count-rate) ---- */
+const ANGLES=[
+  {btn:$('angleGraph'),pane:$('hlAngleGraph')},
+  {btn:$('angleCount'),pane:$('hlAngleCount')}
+];
+function selectAngle(idx){
+  ANGLES.forEach((a,i)=>{
+    const sel=i===idx;
+    a.btn.setAttribute('aria-selected',sel);
+    a.btn.tabIndex=sel?0:-1;
+    a.pane.hidden=!sel;
+  });
+  if(idx===0) buildHalfGraph();
+}
+ANGLES.forEach((a,i)=>{
+  a.btn.addEventListener('click',()=>selectAngle(i));
+  a.btn.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+      e.preventDefault(); const n=(i+(e.key==='ArrowRight'?1:1))%ANGLES.length;
+      selectAngle(n); ANGLES[n].btn.focus();
+    }
+  });
+});
+
+/* ---- ANGLE 1: the decay-curve graph, built half-life by half-life ---- */
+const HL={A0:1600, T:6, unit:'Bq', tUnit:'h', steps:4}; // 1600 Bq, half-life 6 h
+// plot geometry (in the 720x470 viewBox)
+const GX0=78, GX1=686, GY0=34, GY1=398;          // plot rectangle
+const tMax=HL.T*HL.steps;                          // full time span shown
+const px=t=>GX0+(t/tMax)*(GX1-GX0);
+const py=a=>GY1-(a/HL.A0)*(GY1-GY0);
+const actAt=n=>HL.A0/Math.pow(2,n);                // activity after n half-lives
+let hlStep=0, hlBuilt=false;
+
+function buildHalfGraph(){
+  if(hlBuilt) return;
+  hlBuilt=true;
+  const grid=$('hlGrid'), axes=$('hlAxes');
+  grid.innerHTML=''; axes.innerHTML='';
+  // horizontal gridlines + activity ticks at every halving value
+  [0,1,2,3,4].forEach(n=>{
+    const a=actAt(n), y=py(a);
+    grid.appendChild(el('line',{x1:GX0,y1:y,x2:GX1,y2:y,class:'hl-gridline'}));
+    const tk=el('text',{x:GX0-10,y:y+5,'text-anchor':'end',class:'hl-tick'}); tk.textContent=Math.round(a*10)/10;
+    axes.appendChild(tk);
+  });
+  // vertical gridlines + time ticks at each half-life
+  for(let n=0;n<=HL.steps;n++){
+    const x=px(HL.T*n);
+    grid.appendChild(el('line',{x1:x,y1:GY0,x2:x,y2:GY1,class:'hl-gridline'}));
+    const tk=el('text',{x:x,y:GY1+24,'text-anchor':'middle',class:'hl-tick'}); tk.textContent=HL.T*n;
+    axes.appendChild(tk);
+  }
+  // axes lines
+  axes.appendChild(el('line',{x1:GX0,y1:GY0,x2:GX0,y2:GY1,class:'hl-axis'}));
+  axes.appendChild(el('line',{x1:GX0,y1:GY1,x2:GX1,y2:GY1,class:'hl-axis'}));
+  // axis labels
+  const yl=el('text',{x:22,y:(GY0+GY1)/2,'text-anchor':'middle',class:'hl-axislabel',transform:`rotate(-90,22,${(GY0+GY1)/2})`}); yl.textContent='Activity ('+HL.unit+')';
+  axes.appendChild(yl);
+  const xl=el('text',{x:(GX0+GX1)/2,y:GY1+82,'text-anchor':'middle',class:'hl-axislabel'}); xl.textContent='Time ('+HL.tUnit+')';
+  axes.appendChild(xl);
+  resetHalf();
+}
+
+// dense points for the smooth exponential curve between two times
+function curvePath(tFrom,tTo){
+  const pts=[]; const N=40;
+  for(let i=0;i<=N;i++){
+    const t=tFrom+(tTo-tFrom)*(i/N);
+    const a=HL.A0*Math.pow(0.5,t/HL.T);
+    pts.push((i?'L':'M')+px(t).toFixed(1)+' '+py(a).toFixed(1));
+  }
+  return pts.join(' ');
+}
+
+function resetHalf(){
+  hlStep=0;
+  $('hlCurve').innerHTML=''; $('hlGuides').innerHTML='';
+  $('hlBrackets').innerHTML=''; $('hlPoints').innerHTML='';
+  // starting point at (0, A0)
+  $('hlPoints').appendChild(el('circle',{cx:px(0),cy:py(HL.A0),r:6,class:'hl-point'}));
+  const lbl=el('text',{x:px(0)+12,y:py(HL.A0)-8,class:'hl-pointlabel'}); lbl.textContent=HL.A0; $('hlPoints').appendChild(lbl);
+  updateHalfUI();
+  $('hlText').innerHTML=`We start with a fresh sample: activity <b>${HL.A0} ${HL.unit}</b> at time 0. Press the button to let one half-life pass.`;
+}
+
+function updateHalfUI(){
+  $('hlStageStep').textContent=`Step ${hlStep} of ${HL.steps}`;
+  for(let i=1;i<=HL.steps;i++) $('hlDot'+i).classList.toggle('on',i<=hlStep);
+  const btn=$('hlNext');
+  if(hlStep>=HL.steps){ btn.disabled=true; btn.textContent='All four half-lives shown ✓'; }
+  else{ btn.disabled=false; const names=['1st','2nd','3rd','4th']; btn.textContent=`Show the ${names[hlStep]} half-life →`; }
+}
+
+async function revealNextHalf(){
+  if(hlStep>=HL.steps) return;
+  const n=hlStep+1;                       // the half-life we are revealing
+  $('hlNext').disabled=true;
+  const tFrom=HL.T*(n-1), tTo=HL.T*n;
+  const aTo=actAt(n), aFrom=actAt(n-1);
+  // 1) draw the curve segment for this half-life
+  const seg=el('path',{d:curvePath(tFrom,tTo),class:'hl-curve'});
+  $('hlCurve').appendChild(seg);
+  if(!reduced()){
+    const len=seg.getTotalLength();
+    seg.style.strokeDasharray=len; seg.style.strokeDashoffset=len;
+    await anim(seg,[{strokeDashoffset:len},{strokeDashoffset:0}],{duration:850,easing:'linear'});
+    seg.style.strokeDasharray=''; seg.style.strokeDashoffset='';
+  }
+  // 2) guide lines: across from the activity axis to the curve, then down to the time axis
+  const gx=px(tTo), gy=py(aTo);
+  $('hlGuides').appendChild(el('line',{x1:GX0,y1:gy,x2:gx,y2:gy,class:'hl-guide'}));
+  $('hlGuides').appendChild(el('line',{x1:gx,y1:gy,x2:gx,y2:GY1,class:'hl-guide'}));
+  // 3) point + value label
+  $('hlPoints').appendChild(el('circle',{cx:gx,cy:gy,r:6,class:'hl-point'}));
+  const pl=el('text',{x:gx+12,y:gy-8,class:'hl-pointlabel'}); pl.textContent=Math.round(aTo*10)/10; $('hlPoints').appendChild(pl);
+  // 4) equal-width bracket under the x-axis for THIS half-life interval
+  const bx1=px(tFrom), bx2=px(tTo), by=GY1+32;
+  $('hlBrackets').appendChild(el('path',{d:`M${bx1} ${by-6} V${by} H${bx2} V${by-6}`,class:'hl-bracket'}));
+  const bl=el('text',{x:(bx1+bx2)/2,y:by+18,class:'hl-bracketlabel'}); bl.textContent=`1 half-life = ${HL.T} ${HL.tUnit}`; $('hlBrackets').appendChild(bl);
+  hlStep=n;
+  updateHalfUI();
+  // narration
+  const ord=['first','second','third','fourth'][n-1];
+  let msg;
+  if(n===1) msg=`After <b>one</b> half-life (${HL.T} ${HL.tUnit}) the activity halves: <b>${aFrom} → ${aTo} ${HL.unit}</b>.`;
+  else msg=`Another <b>${HL.T} ${HL.tUnit}</b> — the <b>same</b> time again — and it halves once more: <b>${aFrom} → ${aTo} ${HL.unit}</b>. That is the ${ord} half-life.`;
+  if(n===HL.steps) msg+=` After 4 half-lives the sample is just <b>${aTo} ${HL.unit}</b> — one sixteenth (½⁴) of where it started.`;
+  $('hlText').innerHTML=msg;
+  $('liveC').textContent=`Step ${n}. Activity ${aFrom} to ${aTo} ${HL.unit} after ${HL.T*n} ${HL.tUnit}.`;
+}
+$('hlNext').addEventListener('click',revealNextHalf);
+$('hlReset').addEventListener('click',()=>{ resetHalf(); $('liveC').textContent='Graph reset.'; });
+
+/* ---- ANGLE 2: count-rate calculation (no graph) ---- */
+const CR_SCENARIOS=[
+  {iso:'Cobalt-60',     half:'5 years',  hUnit:'years', A0:3200, unit:'Bq'},
+  {iso:'Iodine-131',    half:'8 days',   hUnit:'days',  A0:4800, unit:'counts/s'},
+  {iso:'Thorium-234',   half:'25 days',  hUnit:'days',  A0:6400, unit:'Bq'},
+  {iso:'Technetium-99m',half:'6 hours',  hUnit:'hours', A0:2000, unit:'Bq'},
+  {iso:'Strontium-90',  half:'28 years', hUnit:'years', A0:800,  unit:'Bq'}
+];
+const FRACS=['½','¼','⅛','1⁄16','1⁄32'];
+let crIdx=0, crRevealed=false;
+const crRound=v=>Math.round(v*100)/100;
+
+function buildCount(){
+  const s=CR_SCENARIOS[crIdx];
+  crRevealed=false;
+  $('crIso').textContent=s.iso;
+  $('crHalf').textContent=s.half;
+  $('crStart').textContent=`${s.A0} ${s.unit}`;
+  $('crReveal').textContent='Reveal working';
+  const body=$('crBody'); body.innerHTML='';
+  // parse the numeric part of the half-life for the "time passed" column
+  const hMatch=s.half.match(/[\d.]+/), hNum=hMatch?parseFloat(hMatch[0]):0;
+  for(let n=1;n<=5;n++){
+    const ans=crRound(s.A0/Math.pow(2,n));
+    const prev=crRound(s.A0/Math.pow(2,n-1));
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="cr-n">${n}</td>
+      <td class="cr-time">${crRound(hNum*n)} ${s.hUnit}</td>
+      <td class="cr-frac">${FRACS[n-1]}</td>
+      <td>
+        <input class="cr-input" type="number" inputmode="decimal" aria-label="Count rate after ${n} half-lives" data-ans="${ans}">
+        <span class="cr-unit">${s.unit}</span>
+        <span class="cr-work hidden">${prev} ÷ 2 = <b>${ans} ${s.unit}</b></span>
+      </td>
+      <td><span class="cr-status"></span></td>`;
+    body.appendChild(tr);
+  }
+}
+
+function crCheckAll(){
+  const rows=$('crBody').querySelectorAll('tr');
+  let correct=0, answered=0;
+  rows.forEach(tr=>{
+    const inp=tr.querySelector('.cr-input'), st=tr.querySelector('.cr-status');
+    const ans=parseFloat(inp.dataset.ans);
+    inp.classList.remove('ok','no'); st.classList.remove('ok','no'); st.textContent='';
+    if(inp.value.trim()===''){ return; }
+    answered++;
+    const val=parseFloat(inp.value);
+    if(Math.abs(val-ans)<0.01){ inp.classList.add('ok'); st.classList.add('ok'); st.textContent='✓'; correct++; }
+    else{ inp.classList.add('no'); st.classList.add('no'); st.textContent='✗'; }
+  });
+  $('liveC').textContent=answered? `${correct} of ${answered} predictions correct.` : 'Type a prediction in each row first.';
+}
+
+function crToggleReveal(){
+  crRevealed=!crRevealed;
+  $('crBody').querySelectorAll('.cr-work').forEach(w=>w.classList.toggle('hidden',!crRevealed));
+  if(crRevealed){
+    // also fill + lock the inputs so the worked answers are unmistakable
+    $('crBody').querySelectorAll('tr').forEach(tr=>{
+      const inp=tr.querySelector('.cr-input'), st=tr.querySelector('.cr-status');
+      inp.value=inp.dataset.ans; inp.classList.add('locked'); inp.classList.remove('no');
+      st.classList.remove('no'); st.classList.add('ok'); st.textContent='✓';
+    });
+    $('crReveal').textContent='Hide working';
+    $('liveC').textContent='Worked answers shown.';
+  }else{
+    $('crBody').querySelectorAll('.cr-input').forEach(i=>i.classList.remove('locked'));
+    $('crReveal').textContent='Reveal working';
+  }
+}
+
+$('crCheck').addEventListener('click',crCheckAll);
+$('crReveal').addEventListener('click',crToggleReveal);
+$('crNew').addEventListener('click',()=>{ crIdx=(crIdx+1)%CR_SCENARIOS.length; buildCount(); $('liveC').textContent=`New question: ${CR_SCENARIOS[crIdx].iso}.`; });
+
+/* ============================================================
    INIT
    ============================================================ */
 buildPuddingElectrons();
@@ -1062,6 +1500,7 @@ renderA();
 setOrbits(false);   // electrons start stationary; user opts into motion
 buildDecayOptions();
 setDecay(0);
+buildCount();        // count-rate exercise ready; graph builds lazily when its tab opens
 
 /* ---- Liquid styling: cursor follow + spotlight (decorative; off for reduced-motion/touch) ---- */
 document.querySelectorAll('.spotlight').forEach(elm=>{
