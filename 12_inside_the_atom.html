@@ -661,6 +661,27 @@ function anim(node,frames,opts){
   const a=node.animate(frames,o);
   return a.finished.catch(()=>{});
 }
+/* requestAnimationFrame tween that moves an SVG node through waypoints by
+   updating its transform ATTRIBUTE (user units) — animates reliably on SVG
+   elements where a CSS-property transform may not interpolate visibly. */
+function tween(node,waypoints,duration){
+  const last=waypoints[waypoints.length-1];
+  if(reduced()||waypoints.length<2){
+    node.setAttribute('transform',`translate(${last.x},${last.y})`);
+    return Promise.resolve();
+  }
+  return new Promise(resolve=>{
+    const segs=waypoints.length-1;
+    const start=performance.now();
+    (function frame(now){
+      let t=(now-start)/duration; if(t>1)t=1;
+      const f=t*segs, i=Math.min(Math.floor(f),segs-1), lt=f-i;
+      const a=waypoints[i], b=waypoints[i+1];
+      node.setAttribute('transform',`translate(${a.x+(b.x-a.x)*lt},${a.y+(b.y-a.y)*lt})`);
+      if(t<1) requestAnimationFrame(frame); else resolve();
+    })(start);
+  });
+}
 
 /* ============================================================
    TAB SWITCHING
@@ -871,7 +892,8 @@ async function fireScatter(){
     const endY=95+Math.random()*265;
     const p=mkAlpha(sx,startY); tracks.appendChild(p);
     proms.push((async()=>{
-      await anim(p,[{transform:`translate(${sx}px,${startY}px)`},{transform:`translate(940px,${endY}px)`}],{duration:3000,delay:i*220,easing:'linear'});
+      await wait(i*220);
+      await tween(p,[{x:sx,y:startY},{x:940,y:endY}],3000);
       p.remove(); hitRight(endY);
     })());
   }
@@ -881,11 +903,8 @@ async function fireScatter(){
     const endY=85+Math.random()*130;
     const p=mkAlpha(sx,sy); tracks.appendChild(p);
     proms.push((async()=>{
-      await anim(p,[
-        {transform:`translate(${sx}px,${sy}px)`,offset:0},
-        {transform:`translate(488px,${foilY}px)`,offset:.55},
-        {transform:`translate(54px,${endY}px)`,offset:1}
-      ],{duration:3400,delay:300,easing:'linear'});
+      await wait(300);
+      await tween(p,[{x:sx,y:sy},{x:488,y:foilY},{x:54,y:endY}],3400);
       p.remove(); hitLeft(endY);
     })());
   }
