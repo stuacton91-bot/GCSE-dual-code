@@ -461,93 +461,95 @@ const COV={
 };
 let cKey='H2O', cShared=false;
 const CXC=320, CYC=220;
+const R_DI=54, SEP_DI=104, OV_DI=40;          // diatomic: separated vs overlapped centre offset
+const RC=58, RP=30, R0=140, R1=66;            // central: shell radii, separated vs overlapped distance
 
-function atomCircle(svg,x,y,sym,r=54){
-  const g=E('g',{});
-  g.appendChild(E('circle',{cx:x,cy:y,r,fill:'rgba(255,255,255,.55)',stroke:'rgba(24,95,165,.30)','stroke-width':1.5}));
-  const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':20,fill:'var(--ink)'});t.textContent=sym;g.appendChild(t);
-  svg.appendChild(g); return {x,y,r};
-}
 function putE(svg,x,y,type){svg.appendChild(electron(x,y,type));}
-function ring(cx,cy,r,count,type,svg,skipAngles=[]){ // place `count` electrons around a circle, avoiding skip directions
-  let placed=0,slot=0;
-  const slots=[-90,90,0,180,-45,45,135,-135,-90+22,90+22];
-  while(placed<count&&slot<slots.length){
-    const deg=slots[slot++]; const a=deg*Math.PI/180;
-    if(skipAngles.some(s=>Math.abs(((deg-s+540)%360)-180)<25)){continue;}
-    putE(svg,cx+Math.cos(a)*r,cy+Math.sin(a)*r,type); placed++;
+function angDiff(a,b){let d=((a-b)%360+360)%360;return d>180?360-d:d;}
+function covCircle(g,r,sym){
+  g.appendChild(E('circle',{cx:0,cy:0,r,fill:'rgba(255,255,255,.5)',stroke:'rgba(24,95,165,.32)','stroke-width':1.5}));
+  const t=E('text',{x:0,y:1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':r>40?20:16,fill:'var(--ink)'});t.textContent=sym;g.appendChild(t);
+}
+/* place n electrons around a local circle (in group g), avoiding the bond directions in skip[] */
+function placeAround(g,r,n,type,skip){
+  const slots=[-90,90,-30,30,-150,150,-60,60,-120,120,0,180];
+  let placed=0,i=0;
+  while(placed<n&&i<slots.length){
+    const deg=slots[i++]; if(skip.some(s=>angDiff(deg,s)<44)) continue;
+    const a=deg*Math.PI/180; g.appendChild(electron(Math.cos(a)*r,Math.sin(a)*r,type)); placed++;
   }
-  // fallback: fill remaining evenly
-  let extra=0; while(placed<count){const a=(extra*47)*Math.PI/180;putE(svg,cx+Math.cos(a)*r,cy+Math.sin(a)*r,type);placed++;extra++;}
+  let ex=0; while(placed<n){const a=(ex*49+15)*Math.PI/180;g.appendChild(electron(Math.cos(a)*r,Math.sin(a)*r,type));placed++;ex++;}
+}
+/* the shared pair(s) that sit in the overlap: one cross + one dot straddling the point */
+function drawSharedPairs(svg,x,y,bondDeg,pairs){
+  const pr=(bondDeg+90)*Math.PI/180,px=Math.cos(pr),py=Math.sin(pr);
+  const br=bondDeg*Math.PI/180,bx=Math.cos(br),by=Math.sin(br);
+  for(let i=0;i<pairs;i++){
+    const off=pairs===1?0:(i===0?-10:10), ox=x+bx*off, oy=y+by*off;
+    putE(svg,ox+px*7,oy+py*7,'cross'); putE(svg,ox-px*7,oy-py*7,'dot');
+  }
+}
+function covText(m,shared){
+  $('cHeading').textContent=m.name;
+  $('cFormula').innerHTML=m.formula.replace(/([0-9])/g,'<span class="sub">$1</span>');
+  if(!shared){
+    $('cSentence').className='sentence info'; $('cIco').textContent='i';
+    $('cText').innerHTML=`Neither atom has a full outer shell yet. Press <b>Share</b> — the atoms move together until their shells <b>overlap</b>, and a shared pair sits in the overlap.`;
+  } else {
+    const bonds=m.type==='di'?m.bonds:m.p.count;
+    $('cSentence').className='sentence good'; $('cIco').textContent='✓';
+    $('cText').innerHTML=`Shared! Where the two shells <b>overlap</b> sits a shared pair — one ✕ and one •. That shared pair is a covalent bond, so this molecule has <b>${bonds}</b>, and every atom now has a full outer shell.`;
+    live(`${m.name}: ${bonds} shared pair${bonds>1?'s':''} sitting in the overlapping shells. Full outer shells all round.`);
+  }
 }
 function renderCovalent(){
   const svg=$('svgC'); svg.innerHTML=''; cShared=false;
-  const m=COV[cKey];
-  $('cHeading').textContent=m.name;
-  $('cFormula').innerHTML=m.formula.replace(/([0-9])/g,'<span class="sub">$1</span>');
-  $('cSentence').className='sentence info'; $('cIco').textContent='i';
-  $('cText').innerHTML=`Neither atom has a full outer shell yet. Press <b>Share</b> to overlap them and make the shared pair${(m.type==='di'?m.bonds>1:false)||(m.type==='central'&&m.p.count>1)?'s':''}.`;
+  const m=COV[cKey]; covText(m,false); $('cShare').disabled=false;
   if(m.type==='di'){
-    const gap=cShared?58:96, ax=CXC-gap, bx=CXC+gap, r=54;
-    atomCircle(svg,ax,CYC,m.a.sym,r); atomCircle(svg,bx,CYC,m.b.sym,r);
-    // separate: show each atom's own outer electrons (a=cross, b=dot)
-    ring(ax,CYC,r,m.a.outer,'cross',svg,[0]);
-    ring(bx,CYC,r,m.b.outer,'dot',svg,[180]);
-    window._cState={m,ax,bx,r};
+    const A=E('g',{transform:`translate(${CXC-SEP_DI},${CYC})`}); covCircle(A,R_DI,m.a.sym); placeAround(A,R_DI,m.a.outer,'cross',[]); svg.appendChild(A);
+    const B=E('g',{transform:`translate(${CXC+SEP_DI},${CYC})`}); covCircle(B,R_DI,m.b.sym); placeAround(B,R_DI,m.b.outer,'dot',[]); svg.appendChild(B);
+    window._cov={m,moves:[{g:A,fx:CXC-SEP_DI,fy:CYC,tx:CXC-OV_DI,ty:CYC},{g:B,fx:CXC+SEP_DI,fy:CYC,tx:CXC+OV_DI,ty:CYC}]};
   } else {
-    atomCircle(svg,CXC,CYC,m.c.sym,58);
-    const R=140, n=m.p.count;
-    const peris=[];
-    for(let k=0;k<n;k++){const a=(-90+k*(360/n))*Math.PI/180;const px=CXC+Math.cos(a)*R,py=CYC+Math.sin(a)*R;atomCircle(svg,px,py,m.p.sym,30);peris.push({px,py,a});}
-    // central lone electrons (not toward bonds)
-    const bondDirs=peris.map(p=>Math.atan2(p.py-CYC,p.px-CXC)*180/Math.PI);
-    ring(CXC,CYC,58,m.c.outer,'cross',svg,bondDirs);
-    // peripheral own electron (H has 1) pointing outward
-    peris.forEach(p=>{const a=p.a;putE(svg,p.px+Math.cos(a)*30,p.py+Math.sin(a)*30,'dot');});
-    window._cState={m,peris};
+    const C=E('g',{transform:`translate(${CXC},${CYC})`}); covCircle(C,RC,m.c.sym); placeAround(C,RC,m.c.outer,'cross',[]); svg.appendChild(C);
+    const moves=[];
+    for(let k=0;k<m.p.count;k++){
+      const ar=(-90+k*(360/m.p.count))*Math.PI/180, px=CXC+Math.cos(ar)*R0, py=CYC+Math.sin(ar)*R0;
+      const P=E('g',{transform:`translate(${px},${py})`}); covCircle(P,RP,m.p.sym);
+      P.appendChild(electron(-Math.cos(ar)*RP,-Math.sin(ar)*RP,'dot')); // H's electron faces the bond
+      svg.appendChild(P);
+      moves.push({g:P,fx:px,fy:py,tx:CXC+Math.cos(ar)*R1,ty:CYC+Math.sin(ar)*R1});
+    }
+    window._cov={m,moves};
   }
+}
+async function shareCovalent(){
+  if(cShared) return; cShared=true; $('cShare').disabled=true;
+  const {moves}=window._cov;
+  await Promise.all(moves.map(mv=>anim(mv.g,[{transform:`translate(${mv.fx}px,${mv.fy}px)`},{transform:`translate(${mv.tx}px,${mv.ty}px)`}],{duration:700})));
+  renderShared();
 }
 function renderShared(){
   const svg=$('svgC'); svg.innerHTML=''; cShared=true;
   const m=COV[cKey];
   if(m.type==='di'){
-    const ax=CXC-52,bx=CXC+52,r=54; atomCircle(svg,ax,CYC,m.a.sym,r);atomCircle(svg,bx,CYC,m.b.sym,r);
-    // lone electrons (outer minus those in bonds)
-    ring(ax,CYC,r,m.a.outer-m.bonds,'cross',svg,[0]);
-    ring(bx,CYC,r,m.b.outer-m.bonds,'dot',svg,[180]);
-    // shared pairs in overlap (stack for double bond)
-    for(let bpair=0;bpair<m.bonds;bpair++){
-      const off=(m.bonds===1?0:(bpair===0?-14:14));
-      putE(svg,CXC-8,CYC+off,'cross'); putE(svg,CXC+8,CYC+off,'dot');
-    }
-    bondLine(svg,ax+r,CYC,bx-r,CYC,m.bonds);
+    const A=E('g',{transform:`translate(${CXC-OV_DI},${CYC})`}); covCircle(A,R_DI,m.a.sym); placeAround(A,R_DI,m.a.outer-m.bonds,'cross',[0]);   svg.appendChild(A);
+    const B=E('g',{transform:`translate(${CXC+OV_DI},${CYC})`}); covCircle(B,R_DI,m.b.sym); placeAround(B,R_DI,m.b.outer-m.bonds,'dot',[180]); svg.appendChild(B);
+    drawSharedPairs(svg,CXC,CYC,0,m.bonds);
   } else {
-    atomCircle(svg,CXC,CYC,m.c.sym,58);
-    const R=132,n=m.p.count,peris=[];
-    for(let k=0;k<n;k++){const a=(-90+k*(360/n))*Math.PI/180;const px=CXC+Math.cos(a)*R,py=CYC+Math.sin(a)*R;atomCircle(svg,px,py,m.p.sym,30);peris.push({a,px,py});}
-    const bondDirs=peris.map(p=>p.a*180/Math.PI);
-    ring(CXC,CYC,58,m.c.outer-n,'cross',svg,bondDirs);
-    peris.forEach(p=>{
-      const mx=CXC+Math.cos(p.a)*(58+ (R-58-30)/2), my=CYC+Math.sin(p.a)*(58+(R-58-30)/2);
-      const perp=p.a+Math.PI/2;
-      putE(svg,mx+Math.cos(perp)*7,my+Math.sin(perp)*7,'cross');
-      putE(svg,mx-Math.cos(perp)*7,my-Math.sin(perp)*7,'dot');
-      bondLine(svg,CXC+Math.cos(p.a)*58,CYC+Math.sin(p.a)*58,p.px-Math.cos(p.a)*30,p.py-Math.sin(p.a)*30,1);
+    const bondDegs=[]; for(let k=0;k<m.p.count;k++) bondDegs.push(-90+k*(360/m.p.count));
+    const C=E('g',{transform:`translate(${CXC},${CYC})`}); covCircle(C,RC,m.c.sym); placeAround(C,RC,m.c.outer-m.p.count,'cross',bondDegs); svg.appendChild(C);
+    const xr=(R1*R1+RC*RC-RP*RP)/(2*R1);   // radical line = where the two shells cross
+    bondDegs.forEach(deg=>{
+      const ar=deg*Math.PI/180;
+      const P=E('g',{transform:`translate(${CXC+Math.cos(ar)*R1},${CYC+Math.sin(ar)*R1})`}); covCircle(P,RP,m.p.sym); svg.appendChild(P);
+      drawSharedPairs(svg,CXC+Math.cos(ar)*xr,CYC+Math.sin(ar)*xr,deg,1);
     });
   }
-  $('cSentence').className='sentence good'; $('cIco').textContent='✓';
-  const bondsTotal=m.type==='di'?m.bonds:m.p.count;
-  $('cText').innerHTML=`Shared! Each shared pair (one ✕ and one •) is a covalent bond. This molecule has <b>${bondsTotal}</b> covalent bond${bondsTotal>1?'s':''}, and every atom now has a full outer shell.`;
-  live(`${m.name}: atoms share ${bondsTotal} pair${bondsTotal>1?'s':''} of electrons. Every atom now has a full outer shell.`);
+  covText(m,true);
 }
-function bondLine(svg,x1,y1,x2,y2,order){
-  const g=E('g',{}); const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),ox=-dy/len,oy=dx/len;
-  for(let i=0;i<order;i++){const o=(order===1?0:(i===0?-4:4));g.appendChild(E('line',{x1:x1+ox*o,y1:y1+oy*o,x2:x2+ox*o,y2:y2+oy*o,stroke:'var(--ink-soft)','stroke-width':3,'stroke-linecap':'round',opacity:.55}));}
-  svg.insertBefore(g,svg.firstChild);
-}
-$('cSelect').addEventListener('change',e=>{cKey=e.target.value;renderCovalent();$('cShare').disabled=false;});
-$('cShare').addEventListener('click',()=>{if(!cShared){renderShared();$('cShare').disabled=true;}});
-$('cReset').addEventListener('click',()=>{renderCovalent();$('cShare').disabled=false;});
+$('cSelect').addEventListener('change',e=>{cKey=e.target.value;renderCovalent();});
+$('cShare').addEventListener('click',shareCovalent);
+$('cReset').addEventListener('click',renderCovalent);
 
 /* =================== METALLIC =================== */
 let metalIons=[], seaE=[], mOn=false, mCurrent=false;
