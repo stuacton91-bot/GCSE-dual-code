@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Making Bonds — Ionic, Covalent & Metallic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1813; --paper:#FAFAF7; --blue:#185FA5; --teal:#0F6E56;
+  --paper-2:#F2F1EC; --ink-soft:#4A4742; --line:#D8D5CC; --warn:#B4690E; --bad:#A23B3B;
+  --glass-bg:rgba(250,250,247,0.55); --glass-edge:rgba(255,255,255,0.65);
+  --glass-shadow:rgba(26,24,19,0.10); --focus:#185FA5;
+  --metal:#C06A6A;  /* positive / metal ion (red = positive, consistent with the atom tool) */
+  --cross:#185FA5;  /* dot-and-cross: crosses = blue */
+  --dot:#0F6E56;    /* dot-and-cross: dots = teal */
+}
+*{box-sizing:border-box;}
+html{font-size:18px;}
+html,body{margin:0;padding:0;}
+body{font-family:'Atkinson Hyperlegible',system-ui,sans-serif;color:var(--ink);line-height:1.6;
+  min-height:100vh;padding:clamp(12px,2.5vw,28px);background:var(--paper);overflow-x:hidden;}
+h1,h2,h3{font-family:'Lexend',system-ui,sans-serif;margin:0;line-height:1.15;}
+p{margin:0;}
+a{color:inherit;}
+
+/* liquid background (subtle, freezes under reduced-motion) */
+.liquid{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(1100px 700px at 10% 0%,rgba(24,95,165,.10),transparent 60%),
+  radial-gradient(1000px 700px at 92% 100%,rgba(15,110,86,.10),transparent 60%),var(--paper);}
+.blob{position:absolute;width:46vw;height:46vw;border-radius:50%;filter:blur(80px);opacity:.34;mix-blend-mode:multiply;}
+.b1{left:-10vw;top:-8vw;background:radial-gradient(circle at 35% 35%,#A9CBEC,#185FA5);animation:d1 30s ease-in-out infinite;}
+.b2{right:-12vw;top:14vw;background:radial-gradient(circle at 40% 35%,#96D8C5,#0F6E56);animation:d2 36s ease-in-out infinite;}
+.b3{left:22vw;top:54vw;background:radial-gradient(circle at 35% 35%,#CFE2F4,#5EA0E0);animation:d3 34s ease-in-out infinite;opacity:.28;}
+@keyframes d1{50%{transform:translate(5vw,4vh) rotate(16deg) scale(1.1);border-radius:60% 40% 38% 62%/55% 62% 38% 45%;}}
+@keyframes d2{50%{transform:translate(-6vw,3vh) scale(1.14);border-radius:38% 62% 58% 42%/60% 40% 60% 40%;}}
+@keyframes d3{50%{transform:translate(4vw,-4vh) scale(1.08);border-radius:62% 38% 55% 45%/45% 55% 45% 55%;}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.cursor-glow{position:fixed;top:0;left:0;width:300px;height:300px;border-radius:50%;z-index:-1;pointer-events:none;
+  transform:translate(-50%,-50%);mix-blend-mode:multiply;filter:blur(45px);opacity:.4;
+  background:radial-gradient(circle,rgba(24,95,165,.24),transparent 65%);}
+
+.glass{background:var(--glass-bg);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--glass-edge);border-radius:20px;box-shadow:0 8px 32px var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.5);}
+
+.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;margin-bottom:4px;}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:1760px;margin:0 auto;padding:10px clamp(14px,2vw,22px);border-radius:18px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Lexend';font-weight:700;font-size:1.1rem;color:var(--ink);text-decoration:none;}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 4px 14px rgba(24,95,165,.3);font-weight:800;}
+.nav-back{font-family:'Lexend';font-weight:700;font-size:1rem;color:var(--ink-soft);text-decoration:none;padding:9px 14px;border-radius:11px;transition:background .2s,color .2s;}
+.nav-back:hover{background:rgba(255,255,255,.5);color:var(--ink);}
+.nav-back:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+
+/* header */
+.header{padding:clamp(20px,2.6vw,28px) clamp(20px,3vw,34px);}
+.header .eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--blue);text-transform:uppercase;margin-bottom:12px;}
+.tool-title{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:600;}
+.header .purpose{color:var(--ink-soft);margin-top:8px;max-width:64ch;}
+.grad{background:linear-gradient(110deg,var(--blue),var(--teal) 75%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+/* tabs */
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:10px;}
+.tab{font-family:'Lexend';font-weight:600;font-size:clamp(1rem,1.7vw,1.18rem);padding:16px 14px;border-radius:14px;cursor:pointer;
+  border:2px solid transparent;background:transparent;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .15s,background .2s,color .2s;}
+.tab .tab-sub{font-family:'Atkinson Hyperlegible';font-weight:400;font-size:.86rem;color:var(--ink-soft);text-align:center;}
+.tab[aria-selected="true"]{background:var(--blue);color:#fff;box-shadow:0 6px 20px rgba(24,95,165,.30);}
+.tab[aria-selected="true"] .tab-sub{color:rgba(255,255,255,.92);}
+.tab:hover{transform:translateY(-2px);}
+.tab:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.spotlight{position:relative;overflow:hidden;}
+.spotlight::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(300px circle at var(--mx,50%) var(--my,50%),rgba(24,95,165,.14),transparent 60%);}
+.spotlight:hover::before{opacity:1;}
+
+/* workspace */
+.workspace{display:grid;gap:18px;grid-template-columns:1.9fr 1fr;grid-template-areas:"stage explain" "stage rail";align-items:stretch;}
+.stage{grid-area:stage;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:560px;}
+.explain{grid-area:explain;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+.rail{grid-area:rail;padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+@media(max-width:880px){.workspace{grid-template-columns:1fr;grid-template-areas:"stage" "explain" "rail";}}
+
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.stage-title{font-size:.82rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft);}
+.legend{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:700;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:var(--ink-soft);}
+.chip .dot{width:16px;height:16px;border-radius:50%;flex:none;}
+.chip.cross .dot{background:none;position:relative;}
+.chip.cross .dot::after{content:"✕";position:absolute;inset:-6px 0 0 0;color:var(--cross);font-weight:800;font-size:1.05rem;}
+.chip.dotc .dot{background:var(--dot);}
+.chip.ion .dot{background:radial-gradient(circle at 35% 30%,#E0A0A0,#9A4A4A);}
+
+.stage-frame{flex:1;border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--line);min-height:400px;display:flex;
+  background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.55),rgba(242,241,236,.25) 55%,rgba(216,213,204,.18) 100%);}
+svg.scene{width:100%;height:100%;display:block;}
+
+/* motion toggle */
+.motion-toggle{position:absolute;top:12px;right:12px;z-index:5;display:inline-flex;align-items:center;gap:9px;
+  font-family:'Atkinson Hyperlegible';font-weight:700;font-size:.95rem;color:var(--ink);background:var(--glass-bg);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-edge);border-radius:999px;
+  padding:9px 15px;min-height:46px;cursor:pointer;box-shadow:0 4px 14px var(--glass-shadow);transition:transform .15s,box-shadow .2s;}
+.motion-toggle:hover{transform:translateY(-1px);box-shadow:0 8px 18px var(--glass-shadow);}
+.motion-toggle:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.motion-toggle .mt-dot{width:13px;height:13px;border-radius:50%;background:var(--line);flex:none;transition:background .2s,box-shadow .2s;}
+.motion-toggle.on .mt-dot{background:var(--teal);box-shadow:0 0 0 4px rgba(15,110,86,.20);}
+.motion-toggle .mt-state{min-width:2.2ch;color:var(--ink-soft);}
+.motion-toggle.on .mt-state{color:var(--teal);}
+
+/* explain */
+.section-heading{font-size:clamp(1.15rem,2vw,1.4rem);font-weight:600;}
+.result-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.formula{font-family:'Lexend';font-weight:700;font-size:clamp(2rem,5vw,3rem);}
+.formula .sub{font-size:.62em;vertical-align:sub;}
+.pill{font-family:'Lexend';font-weight:700;font-size:.9rem;padding:6px 13px;border-radius:999px;color:#fff;}
+.pill.ionic{background:var(--metal);} .pill.covalent{background:var(--teal);} .pill.metallic{background:var(--blue);}
+.divider{height:1px;background:var(--line);border:0;margin:2px 0;}
+.card{display:flex;flex-direction:column;gap:10px;}
+.card .field{display:flex;flex-direction:column;gap:3px;}
+.card .field .label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.card .field .value{font-size:1.02rem;}
+.sentence{border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;font-size:1.04rem;border:1px solid var(--line);background:rgba(255,255,255,.45);}
+.sentence .ico{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;font-family:'Lexend';}
+.sentence.good{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);} .sentence.good .ico{background:var(--teal);}
+.sentence.info .ico{background:var(--blue);}
+.takeaway{margin-top:auto;border-radius:14px;padding:14px 16px;background:linear-gradient(120deg,rgba(24,95,165,.12),rgba(15,110,86,.12));border:1px solid var(--glass-edge);font-weight:700;display:flex;gap:10px;align-items:flex-start;}
+.props{list-style:none;margin:0;padding:0;display:grid;gap:9px;}
+.props li{display:flex;gap:10px;align-items:flex-start;font-weight:700;font-size:.98rem;}
+.props .tk{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;background:var(--blue);font-size:.9rem;}
+
+/* rail */
+.rail-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.sel-label{font-size:.85rem;font-weight:700;color:var(--ink-soft);margin:2px 0 -4px;}
+.select{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1.02rem;padding:.7rem;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.75);color:var(--ink);min-height:48px;width:100%;cursor:pointer;}
+.select:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1rem;padding:.75rem 1.2rem;border-radius:12px;min-height:48px;min-width:48px;
+  border:1px solid var(--glass-edge);cursor:pointer;transition:transform .15s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:9px;}
+.btn-primary{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(24,95,165,.32);}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(24,95,165,.42);}
+.btn-secondary{background:rgba(255,255,255,.5);backdrop-filter:blur(12px);color:var(--ink);}
+.btn-secondary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 26px var(--glass-shadow);}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;} .btn-row .btn{flex:1;}
+.reveal-box{border:1px dashed var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.4);display:none;}
+.reveal-box.open{display:block;}
+.footnote{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:6px 0 2px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[hidden]{display:none !important;}
+
+@media (prefers-reduced-transparency: reduce),(prefers-contrast: more){
+  .glass,.btn-secondary,.motion-toggle{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .chip,.sentence,.stage-frame,.reveal-box{background:var(--paper);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .blob{animation:none !important;} .cursor-glow{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="liquid" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursor" aria-hidden="true"></div>
+
+<nav class="nav" aria-label="Site">
+  <div class="nav-in glass">
+    <a class="brand" href="index.html"><span class="mark">◐</span>Dual&nbsp;Code</a>
+    <a class="nav-back" href="index.html">← All tools</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="header glass">
+    <p class="eyebrow">Chemistry · Structure &amp; bonding · Dual-coding</p>
+    <h1 class="tool-title">Making <span class="grad">Bonds</span></h1>
+    <p class="purpose">Three ways atoms join up. Watch the <b>electrons</b> move — because what happens to the electrons decides the type of bond.</p>
+  </header>
+
+  <nav class="modes glass" role="tablist" aria-label="Choose a bond type">
+    <button class="tab spotlight" id="tabI" role="tab" aria-selected="true" aria-controls="modeI">Ionic<span class="tab-sub">metal + non-metal · electrons given away</span></button>
+    <button class="tab spotlight" id="tabC" role="tab" aria-selected="false" aria-controls="modeC" tabindex="-1">Covalent<span class="tab-sub">non-metals · electrons shared</span></button>
+    <button class="tab spotlight" id="tabM" role="tab" aria-selected="false" aria-controls="modeM" tabindex="-1">Metallic<span class="tab-sub">metals · a sea of electrons</span></button>
+  </nav>
+
+  <!-- ===================== IONIC ===================== -->
+  <section id="modeI" role="tabpanel" aria-labelledby="tabI">
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Electron transfer</span>
+          <div class="legend">
+            <span class="chip cross"><span class="dot"></span>metal electron</span>
+            <span class="chip dotc"><span class="dot"></span>non-metal electron</span>
+          </div>
+        </div>
+        <div class="stage-frame">
+          <svg id="svgI" class="scene" viewBox="0 0 640 440" role="img" aria-label="Two atoms: a metal on the left and a non-metal on the right."></svg>
+        </div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading" id="iHeading">Sodium chloride</h2>
+        <div class="result-row"><span class="formula" id="iFormula">NaCl</span><span class="pill ionic">Ionic bond</span></div>
+        <div class="sentence info" id="iSentence" role="status"><span class="ico" id="iIco">i</span><span id="iText">The metal has spare outer electrons; the non-metal is nearly full. Press <b>Transfer</b> to see what happens.</span></div>
+        <div class="reveal-box" id="latticeBox"><h3 style="font-family:Lexend;font-size:1.05rem;margin-bottom:8px">Giant ionic lattice</h3>
+          <svg id="svgLattice" viewBox="0 0 320 200" role="img" aria-label="A regular grid of alternating positive and negative ions."></svg>
+          <p style="font-size:.95rem;color:var(--ink-soft);margin-top:8px">Millions of these ions repeat in a regular pattern, held by strong forces in every direction.</p>
+        </div>
+        <div class="takeaway"><span>💡</span><span>Metal <b>gives</b> electrons (becomes +), non-metal <b>takes</b> them (becomes −). Opposite charges attract — that pull is the ionic bond.</span></div>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Build a compound</span>
+        <label class="sel-label" for="iMetal">Metal (group 1 or 2)</label>
+        <select class="select" id="iMetal" aria-label="Choose a metal"></select>
+        <label class="sel-label" for="iNonmetal">Non-metal (group 6 or 7)</label>
+        <select class="select" id="iNonmetal" aria-label="Choose a non-metal"></select>
+        <button class="btn btn-primary" id="iTransfer">Transfer electron(s) →</button>
+        <button class="btn btn-secondary" id="iLattice">Show the lattice</button>
+        <button class="btn btn-secondary" id="iReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COVALENT ===================== -->
+  <section id="modeC" role="tabpanel" aria-labelledby="tabC" hidden>
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Electron sharing</span>
+          <div class="legend">
+            <span class="chip cross"><span class="dot"></span>atom 1 (×)</span>
+            <span class="chip dotc"><span class="dot"></span>atom 2 (•)</span>
+          </div>
+        </div>
+        <div class="stage-frame">
+          <svg id="svgC" class="scene" viewBox="0 0 640 440" role="img" aria-label="Non-metal atoms sharing electrons."></svg>
+        </div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading" id="cHeading">Water</h2>
+        <div class="result-row"><span class="formula" id="cFormula">H<span class="sub">2</span>O</span><span class="pill covalent">Covalent bond</span></div>
+        <div class="sentence info" id="cSentence" role="status"><span class="ico" id="cIco">i</span><span id="cText">Neither atom has a full outer shell. Press <b>Share</b> to overlap them and make shared pairs.</span></div>
+        <div class="takeaway"><span>💡</span><span>Non-metals <b>share</b> pairs of electrons. Each shared pair is a covalent bond, and it fills both atoms’ outer shells.</span></div>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Choose a molecule</span>
+        <select class="select" id="cSelect" aria-label="Choose a molecule"></select>
+        <button class="btn btn-primary" id="cShare">Share electrons →</button>
+        <button class="btn btn-secondary" id="cReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== METALLIC ===================== -->
+  <section id="modeM" role="tabpanel" aria-labelledby="tabM" hidden>
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">A sea of electrons</span>
+          <div class="legend">
+            <span class="chip ion"><span class="dot"></span>metal ion +</span>
+            <span class="chip dotc"><span class="dot"></span>delocalised electron −</span>
+          </div>
+        </div>
+        <div class="stage-frame">
+          <button class="motion-toggle" id="motionToggle" type="button" aria-pressed="false" title="Turn electron movement on or off">
+            <span class="mt-dot" aria-hidden="true"></span>Motion:&nbsp;<span class="mt-state">Off</span>
+          </button>
+          <svg id="svgM" class="scene" viewBox="0 0 640 440" role="img" aria-label="A regular lattice of positive metal ions surrounded by a sea of freely moving electrons."></svg>
+        </div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading">Metallic bonding</h2>
+        <div class="result-row"><span class="formula">＋ ＋ ＋</span><span class="pill metallic">Metallic bond</span></div>
+        <div class="sentence info" id="mSentence" role="status"><span class="ico">i</span><span id="mText">Metal atoms lose their outer electrons. The electrons become <b>delocalised</b> — free to move between the fixed positive ions.</span></div>
+        <ul class="props">
+          <li><span class="tk">⚡</span><span>Conducts electricity — the free electrons carry charge. Press <b>Pass a current</b>.</span></li>
+          <li><span class="tk">🔨</span><span>Malleable — layers of ions can slide without breaking the bond.</span></li>
+          <li><span class="tk">🌡</span><span>High melting point — strong attraction between ions and the electron sea.</span></li>
+        </ul>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Explore</span>
+        <button class="btn btn-primary" id="mCurrent">Pass a current →</button>
+        <p style="font-size:.92rem;color:var(--ink-soft)">Use <b>Motion</b> (top-right of the stage) to switch the electron sea on or off. It starts still so you can look first.</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote">Calm, reversible, trigger-only. Nothing moves until you press a button. Built on the SEND-first Dual Code design system.</p>
+</div>
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<script>
+"use strict";
+const $=(id)=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE='cubic-bezier(0.4,0,0.2,1)';
+function E(n,a={}){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function anim(node,frames,opts){const o=Object.assign({easing:EASE,fill:'forwards'},opts);if(reduced())o.duration=1;return node.animate(frames,o).finished.catch(()=>{});}
+function live(t){$('live').textContent=t;}
+
+/* shared electron drawing: 'cross' = blue ×, 'dot' = teal • */
+function electron(x,y,type){
+  if(type==='cross'){const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':800,'font-size':16,fill:'var(--cross)'});t.textContent='✕';return t;}
+  return E('circle',{cx:x,cy:y,r:6,fill:'var(--dot)'});
+}
+function nucleus(x,y,sym){
+  const g=E('g',{});
+  g.appendChild(E('circle',{cx:x,cy:y,r:20,fill:'#fff',stroke:'var(--line)','stroke-width':1.5}));
+  const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':17,fill:'var(--ink)'});
+  t.textContent=sym; g.appendChild(t); return g;
+}
+const SR=i=>24+i*20;   // shell radius
+
+/* =================== TAB SWITCHING =================== */
+const tabs={I:$('tabI'),C:$('tabC'),M:$('tabM')}, panes={I:$('modeI'),C:$('modeC'),M:$('modeM')};
+function selectTab(which){
+  for(const k in tabs){const on=k===which;tabs[k].setAttribute('aria-selected',on);tabs[k].tabIndex=on?0:-1;panes[k].hidden=!on;}
+}
+for(const k in tabs) tabs[k].addEventListener('click',()=>selectTab(k));
+
+/* =================== IONIC =================== */
+function gcd(a,b){return b?gcd(b,a%b):a;}
+function sup(c){return '<sup>'+c+'</sup>';}
+const METALS={
+  Li:{sym:'Li',name:'Lithium',shells:[2,1],group:1},
+  Na:{sym:'Na',name:'Sodium',shells:[2,8,1],group:1},
+  K :{sym:'K', name:'Potassium',shells:[2,8,8,1],group:1},
+  Be:{sym:'Be',name:'Beryllium',shells:[2,2],group:2},
+  Mg:{sym:'Mg',name:'Magnesium',shells:[2,8,2],group:2},
+  Ca:{sym:'Ca',name:'Calcium',shells:[2,8,8,2],group:2}
+};
+const NONMETALS={
+  O :{sym:'O', ename:'Oxygen',  ide:'oxide',   shells:[2,6],group:6},
+  F :{sym:'F', ename:'Fluorine',ide:'fluoride',shells:[2,7],group:7},
+  Cl:{sym:'Cl',ename:'Chlorine',ide:'chloride',shells:[2,8,7],group:7}
+};
+let iMetalKey='Na', iNonKey='Cl', iDone=false;
+
+function electronS(x,y,type,s){
+  if(type==='cross'){const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':800,'font-size':16*s,fill:'var(--cross)'});t.textContent='✕';return t;}
+  return E('circle',{cx:x,cy:y,r:6*s,fill:'var(--dot)'});
+}
+function drawAtom(svg,cx,cy,s,shells,sym,{defType,outerTypes=null}){
+  shells.forEach((c,i)=>svg.appendChild(E('circle',{cx,cy,r:SR(i)*s,fill:'none',stroke:'rgba(24,95,165,.28)','stroke-width':1.5})));
+  svg.appendChild(E('circle',{cx,cy,r:20*s,fill:'#fff',stroke:'var(--line)','stroke-width':1.5}));
+  const st=E('text',{x:cx,y:cy+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':17*s,fill:'var(--ink)'});st.textContent=sym;svg.appendChild(st);
+  const outerIdx=shells.length-1, outer=[];
+  shells.forEach((count,i)=>{
+    const r=SR(i)*s;
+    for(let k=0;k<count;k++){
+      const a=-Math.PI/2+k*(2*Math.PI/Math.max(count,1));
+      const ex=cx+Math.cos(a)*r, ey=cy+Math.sin(a)*r;
+      let type=defType; if(i===outerIdx&&outerTypes) type=outerTypes[k]||defType;
+      const el=electronS(ex,ey,type,s); svg.appendChild(el);
+      if(i===outerIdx) outer.push({el,x:ex,y:ey});
+    }
+  });
+  return {outer,cx,cy,outerR:SR(outerIdx)*s};
+}
+/* large curved square brackets around an ion, charge as superscript at the top-right */
+function bracketedIon(svg,cx,cy,R,charge,color){
+  const padX=13,padY=11,serif=11,rc=6,H=R+padY,Lx=cx-(R+padX),Rx=cx+(R+padX);
+  const left =`M${Lx+serif} ${cy-H} L${Lx+rc} ${cy-H} Q${Lx} ${cy-H} ${Lx} ${cy-H+rc} L${Lx} ${cy+H-rc} Q${Lx} ${cy+H} ${Lx+rc} ${cy+H} L${Lx+serif} ${cy+H}`;
+  const right=`M${Rx-serif} ${cy-H} L${Rx-rc} ${cy-H} Q${Rx} ${cy-H} ${Rx} ${cy-H+rc} L${Rx} ${cy+H-rc} Q${Rx} ${cy+H} ${Rx-rc} ${cy+H} L${Rx-serif} ${cy+H}`;
+  svg.appendChild(E('path',{d:left, fill:'none',stroke:'var(--ink)','stroke-width':2.5,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  svg.appendChild(E('path',{d:right,fill:'none',stroke:'var(--ink)','stroke-width':2.5,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  const ct=E('text',{x:Rx+6,y:cy-H+2,'text-anchor':'start','dominant-baseline':'hanging','font-family':'Lexend','font-weight':800,'font-size':23,fill:color});
+  ct.textContent=charge; svg.appendChild(ct);
+}
+function ionShellsMetal(sh,n){const s=sh.slice();s[s.length-1]-=n;if(s[s.length-1]<=0)s.pop();return s;}
+function ionShellsNon(sh,n){const s=sh.slice();s[s.length-1]+=n;return s;}
+function compound(mk,nk){
+  const m=METALS[mk], n=NONMETALS[nk], gives=m.group, needs=8-n.shells[n.shells.length-1], g=gcd(gives,needs);
+  return {m,n,gives,needs,mc:needs/g,nc:gives/g,mCharge:gives,nCharge:needs};
+}
+function chargeStr(v,sign){return (v===1?'':v)+sign;}
+function formulaStr(c){const sub=x=>x>1?`<sub>${x}</sub>`:'';return `${c.m.sym}${sub(c.mc)}${c.n.sym}${sub(c.nc)}`;}
+function ionicLayout(c){
+  const total=c.mc+c.nc, s=total>=3?0.72:1, LX=180,RX=460,CY=220,TOP=126,BOT=314;
+  return {s,
+    metals:c.mc===1?[{x:LX,y:CY}]:[{x:LX,y:TOP},{x:LX,y:BOT}],
+    nons  :c.nc===1?[{x:RX,y:CY}]:[{x:RX,y:TOP},{x:RX,y:BOT}]};
+}
+function renderIonic(){
+  iDone=false;
+  const c=compound(iMetalKey,iNonKey), L=ionicLayout(c), svg=$('svgI'); svg.innerHTML='';
+  window._ionic={c,L};
+  window._ionic.metalAtoms=L.metals.map(p=>drawAtom(svg,p.x,p.y,L.s,c.m.shells,c.m.sym,{defType:'cross'}));
+  window._ionic.nonAtoms  =L.nons.map(p=>drawAtom(svg,p.x,p.y,L.s,c.n.shells,c.n.sym,{defType:'dot'}));
+  $('iHeading').textContent=`${c.m.name} ${c.n.ide}`;
+  $('iFormula').innerHTML=formulaStr(c);
+  $('iSentence').className='sentence info'; $('iIco').textContent='i';
+  $('iText').innerHTML=`<b>${c.m.name}</b> (group ${c.m.group}) gives away <b>${c.gives}</b> electron${c.gives>1?'s':''} per atom; <b>${c.n.ename}</b> (group ${c.n.group}) needs <b>${c.needs}</b>. Ratio <b>${c.mc}&#8202;:&#8202;${c.nc}</b>. Press <b>Transfer</b>.`;
+  $('latticeBox').classList.remove('open'); $('iLattice').textContent='Show the lattice';
+  $('iTransfer').disabled=false;
+  svg.setAttribute('aria-label',`${c.mc} ${c.m.name} atom(s) beside ${c.nc} ${c.n.ename} atom(s).`);
+}
+async function ionicTransfer(){
+  if(iDone) return; $('iTransfer').disabled=true;
+  const {c,L,metalAtoms,nonAtoms}=window._ionic, svg=$('svgI');
+  const sources=[]; metalAtoms.forEach(a=>a.outer.slice(0,c.gives).forEach(o=>sources.push(o)));
+  const targets=[];
+  nonAtoms.forEach(a=>{
+    const orig=c.n.shells[c.n.shells.length-1], nc=orig+c.needs, r=SR(c.n.shells.length-1)*L.s;
+    for(let k=orig;k<nc;k++){const ang=-Math.PI/2+k*(2*Math.PI/nc);targets.push({x:a.cx+Math.cos(ang)*r,y:a.cy+Math.sin(ang)*r});}
+  });
+  const fliers=sources.map((sc,i)=>{
+    sc.el.remove();
+    const g=E('g',{transform:`translate(${sc.x},${sc.y})`}); g.appendChild(electronS(0,0,'cross',L.s)); svg.appendChild(g);
+    return {g,from:sc,to:targets[i]};
+  });
+  await Promise.all(fliers.map(fl=>anim(fl.g,[{transform:`translate(${fl.from.x}px,${fl.from.y}px)`},{transform:`translate(${fl.to.x}px,${fl.to.y}px)`}],{duration:850})));
+  fliers.forEach(fl=>fl.g.remove());
+  renderIons();
+}
+function renderIons(){
+  const {c,L}=window._ionic, svg=$('svgI'); svg.innerHTML='';
+  const mShells=ionShellsMetal(c.m.shells,c.gives);
+  L.metals.forEach(p=>{const a=drawAtom(svg,p.x,p.y,L.s,mShells,c.m.sym,{defType:'cross'});bracketedIon(svg,p.x,p.y,a.outerR,chargeStr(c.mCharge,'+'),'var(--metal)');});
+  const nShells=ionShellsNon(c.n.shells,c.needs), nn=nShells[nShells.length-1], outerTypes=[];
+  for(let k=0;k<nn;k++) outerTypes.push(k<(nn-c.needs)?'dot':'cross');
+  L.nons.forEach(p=>{const a=drawAtom(svg,p.x,p.y,L.s,nShells,c.n.sym,{defType:'dot',outerTypes});bracketedIon(svg,p.x,p.y,a.outerR,chargeStr(c.nCharge,'−'),'var(--teal)');});
+  $('iSentence').className='sentence good'; $('iIco').textContent='✓';
+  $('iText').innerHTML=`Full outer shells all round. The metal became <b>${c.m.sym}${sup(chargeStr(c.mCharge,'+'))}</b> and the non-metal became <b>${c.n.sym}${sup(chargeStr(c.nCharge,'−'))}</b>. Opposite charges attract — that pull is the ionic bond in <b>${formulaStr(c)}</b>.`;
+  live(`${c.m.name} ${c.n.ide} formed: ${chargeStr(c.mCharge,'+')} and ${chargeStr(c.nCharge,'−')} ions attracting.`);
+  iDone=true;
+}
+function renderLattice(){
+  const svg=$('svgLattice'); svg.innerHTML='';
+  for(let r=0;r<4;r++)for(let col=0;col<6;col++){
+    const x=30+col*52, y=28+r*48, pos=(r+col)%2===0;
+    svg.appendChild(E('circle',{cx:x,cy:y,r:pos?14:18,fill:pos?'var(--metal)':'var(--teal)',opacity:.92}));
+    const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':800,'font-size':13,fill:'#fff'});t.textContent=pos?'+':'−';svg.appendChild(t);
+  }
+}
+$('iMetal').addEventListener('change',e=>{iMetalKey=e.target.value;renderIonic();});
+$('iNonmetal').addEventListener('change',e=>{iNonKey=e.target.value;renderIonic();});
+$('iTransfer').addEventListener('click',ionicTransfer);
+$('iLattice').addEventListener('click',()=>{const b=$('latticeBox');const open=b.classList.toggle('open');$('iLattice').textContent=open?'Hide the lattice':'Show the lattice';if(open)renderLattice();});
+$('iReset').addEventListener('click',()=>renderIonic());
+
+/* =================== COVALENT =================== */
+const COV={
+  H2 :{name:'Hydrogen',formula:'H₂',type:'di',a:{sym:'H',outer:1},b:{sym:'H',outer:1},bonds:1},
+  Cl2:{name:'Chlorine',formula:'Cl₂',type:'di',a:{sym:'Cl',outer:7},b:{sym:'Cl',outer:7},bonds:1},
+  HCl:{name:'Hydrogen chloride',formula:'HCl',type:'di',a:{sym:'Cl',outer:7},b:{sym:'H',outer:1},bonds:1},
+  O2 :{name:'Oxygen',formula:'O₂',type:'di',a:{sym:'O',outer:6},b:{sym:'O',outer:6},bonds:2},
+  H2O:{name:'Water',formula:'H₂O',type:'central',c:{sym:'O',outer:6},p:{sym:'H',outer:1,count:2}},
+  NH3:{name:'Ammonia',formula:'NH₃',type:'central',c:{sym:'N',outer:5},p:{sym:'H',outer:1,count:3}},
+  CH4:{name:'Methane',formula:'CH₄',type:'central',c:{sym:'C',outer:4},p:{sym:'H',outer:1,count:4}}
+};
+let cKey='H2O', cShared=false;
+const CXC=320, CYC=220;
+
+function atomCircle(svg,x,y,sym,r=54){
+  const g=E('g',{});
+  g.appendChild(E('circle',{cx:x,cy:y,r,fill:'rgba(255,255,255,.55)',stroke:'rgba(24,95,165,.30)','stroke-width':1.5}));
+  const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':20,fill:'var(--ink)'});t.textContent=sym;g.appendChild(t);
+  svg.appendChild(g); return {x,y,r};
+}
+function putE(svg,x,y,type){svg.appendChild(electron(x,y,type));}
+function ring(cx,cy,r,count,type,svg,skipAngles=[]){ // place `count` electrons around a circle, avoiding skip directions
+  let placed=0,slot=0;
+  const slots=[-90,90,0,180,-45,45,135,-135,-90+22,90+22];
+  while(placed<count&&slot<slots.length){
+    const deg=slots[slot++]; const a=deg*Math.PI/180;
+    if(skipAngles.some(s=>Math.abs(((deg-s+540)%360)-180)<25)){continue;}
+    putE(svg,cx+Math.cos(a)*r,cy+Math.sin(a)*r,type); placed++;
+  }
+  // fallback: fill remaining evenly
+  let extra=0; while(placed<count){const a=(extra*47)*Math.PI/180;putE(svg,cx+Math.cos(a)*r,cy+Math.sin(a)*r,type);placed++;extra++;}
+}
+function renderCovalent(){
+  const svg=$('svgC'); svg.innerHTML=''; cShared=false;
+  const m=COV[cKey];
+  $('cHeading').textContent=m.name;
+  $('cFormula').innerHTML=m.formula.replace(/([0-9])/g,'<span class="sub">$1</span>');
+  $('cSentence').className='sentence info'; $('cIco').textContent='i';
+  $('cText').innerHTML=`Neither atom has a full outer shell yet. Press <b>Share</b> to overlap them and make the shared pair${(m.type==='di'?m.bonds>1:false)||(m.type==='central'&&m.p.count>1)?'s':''}.`;
+  if(m.type==='di'){
+    const gap=cShared?58:96, ax=CXC-gap, bx=CXC+gap, r=54;
+    atomCircle(svg,ax,CYC,m.a.sym,r); atomCircle(svg,bx,CYC,m.b.sym,r);
+    // separate: show each atom's own outer electrons (a=cross, b=dot)
+    ring(ax,CYC,r,m.a.outer,'cross',svg,[0]);
+    ring(bx,CYC,r,m.b.outer,'dot',svg,[180]);
+    window._cState={m,ax,bx,r};
+  } else {
+    atomCircle(svg,CXC,CYC,m.c.sym,58);
+    const R=140, n=m.p.count;
+    const peris=[];
+    for(let k=0;k<n;k++){const a=(-90+k*(360/n))*Math.PI/180;const px=CXC+Math.cos(a)*R,py=CYC+Math.sin(a)*R;atomCircle(svg,px,py,m.p.sym,30);peris.push({px,py,a});}
+    // central lone electrons (not toward bonds)
+    const bondDirs=peris.map(p=>Math.atan2(p.py-CYC,p.px-CXC)*180/Math.PI);
+    ring(CXC,CYC,58,m.c.outer,'cross',svg,bondDirs);
+    // peripheral own electron (H has 1) pointing outward
+    peris.forEach(p=>{const a=p.a;putE(svg,p.px+Math.cos(a)*30,p.py+Math.sin(a)*30,'dot');});
+    window._cState={m,peris};
+  }
+}
+function renderShared(){
+  const svg=$('svgC'); svg.innerHTML=''; cShared=true;
+  const m=COV[cKey];
+  if(m.type==='di'){
+    const ax=CXC-52,bx=CXC+52,r=54; atomCircle(svg,ax,CYC,m.a.sym,r);atomCircle(svg,bx,CYC,m.b.sym,r);
+    // lone electrons (outer minus those in bonds)
+    ring(ax,CYC,r,m.a.outer-m.bonds,'cross',svg,[0]);
+    ring(bx,CYC,r,m.b.outer-m.bonds,'dot',svg,[180]);
+    // shared pairs in overlap (stack for double bond)
+    for(let bpair=0;bpair<m.bonds;bpair++){
+      const off=(m.bonds===1?0:(bpair===0?-14:14));
+      putE(svg,CXC-8,CYC+off,'cross'); putE(svg,CXC+8,CYC+off,'dot');
+    }
+    bondLine(svg,ax+r,CYC,bx-r,CYC,m.bonds);
+  } else {
+    atomCircle(svg,CXC,CYC,m.c.sym,58);
+    const R=132,n=m.p.count,peris=[];
+    for(let k=0;k<n;k++){const a=(-90+k*(360/n))*Math.PI/180;const px=CXC+Math.cos(a)*R,py=CYC+Math.sin(a)*R;atomCircle(svg,px,py,m.p.sym,30);peris.push({a,px,py});}
+    const bondDirs=peris.map(p=>p.a*180/Math.PI);
+    ring(CXC,CYC,58,m.c.outer-n,'cross',svg,bondDirs);
+    peris.forEach(p=>{
+      const mx=CXC+Math.cos(p.a)*(58+ (R-58-30)/2), my=CYC+Math.sin(p.a)*(58+(R-58-30)/2);
+      const perp=p.a+Math.PI/2;
+      putE(svg,mx+Math.cos(perp)*7,my+Math.sin(perp)*7,'cross');
+      putE(svg,mx-Math.cos(perp)*7,my-Math.sin(perp)*7,'dot');
+      bondLine(svg,CXC+Math.cos(p.a)*58,CYC+Math.sin(p.a)*58,p.px-Math.cos(p.a)*30,p.py-Math.sin(p.a)*30,1);
+    });
+  }
+  $('cSentence').className='sentence good'; $('cIco').textContent='✓';
+  const bondsTotal=m.type==='di'?m.bonds:m.p.count;
+  $('cText').innerHTML=`Shared! Each shared pair (one ✕ and one •) is a covalent bond. This molecule has <b>${bondsTotal}</b> covalent bond${bondsTotal>1?'s':''}, and every atom now has a full outer shell.`;
+  live(`${m.name}: atoms share ${bondsTotal} pair${bondsTotal>1?'s':''} of electrons. Every atom now has a full outer shell.`);
+}
+function bondLine(svg,x1,y1,x2,y2,order){
+  const g=E('g',{}); const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),ox=-dy/len,oy=dx/len;
+  for(let i=0;i<order;i++){const o=(order===1?0:(i===0?-4:4));g.appendChild(E('line',{x1:x1+ox*o,y1:y1+oy*o,x2:x2+ox*o,y2:y2+oy*o,stroke:'var(--ink-soft)','stroke-width':3,'stroke-linecap':'round',opacity:.55}));}
+  svg.insertBefore(g,svg.firstChild);
+}
+$('cSelect').addEventListener('change',e=>{cKey=e.target.value;renderCovalent();$('cShare').disabled=false;});
+$('cShare').addEventListener('click',()=>{if(!cShared){renderShared();$('cShare').disabled=true;}});
+$('cReset').addEventListener('click',()=>{renderCovalent();$('cShare').disabled=false;});
+
+/* =================== METALLIC =================== */
+let metalIons=[], seaE=[], mOn=false, mCurrent=false;
+function renderMetallic(){
+  const svg=$('svgM'); svg.innerHTML=''; metalIons=[]; seaE=[];
+  const ionsL=E('g',{}), seaL=E('g',{id:'seaLayer'});
+  for(let r=0;r<4;r++)for(let c=0;c<6;c++){
+    const x=90+c*92, y=90+r*90;
+    const g=E('g',{}); g.appendChild(E('circle',{cx:x,cy:y,r:26,fill:'var(--metal)',opacity:.9,stroke:'rgba(255,255,255,.4)','stroke-width':1.5}));
+    const t=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':800,'font-size':18,fill:'#fff'});t.textContent='+';g.appendChild(t);
+    ionsL.appendChild(g); metalIons.push({x,y});
+  }
+  // delocalised electrons in the gaps
+  for(let r=0;r<3;r++)for(let c=0;c<5;c++){
+    const x=136+c*92, y=135+r*90;
+    const el=E('circle',{cx:x,cy:y,r:7,fill:'var(--dot)'});
+    seaL.appendChild(el);
+    const tx=E('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central','font-family':'Lexend','font-weight':700,'font-size':9,fill:'#fff'});tx.textContent='−';seaL.appendChild(tx);
+    seaE.push({el,tx,bx:x,by:y,px:(Math.random()*2-1),py:(Math.random()*2-1)});
+  }
+  svg.appendChild(ionsL); svg.appendChild(seaL);
+}
+function seaLoop(){
+  if(!mOn) return;
+  const t=performance.now()/1000;
+  seaE.forEach((e,i)=>{
+    let nx,ny;
+    if(mCurrent){ nx=((e.bx-90 + t*70 + i*13)%556)+90; ny=e.by+Math.sin(t*2+i)*6; }
+    else { nx=e.bx+Math.sin(t*0.9+i*1.3)*16; ny=e.by+Math.cos(t*1.1+i*0.7)*14; }
+    e.el.setAttribute('cx',nx); e.el.setAttribute('cy',ny); e.tx.setAttribute('x',nx); e.tx.setAttribute('y',ny+1);
+  });
+  requestAnimationFrame(seaLoop);
+}
+function setMotion(on){
+  mOn=on; const b=$('motionToggle');
+  b.setAttribute('aria-pressed',on); b.classList.toggle('on',on); b.querySelector('.mt-state').textContent=on?'On':'Off';
+  live(on?'Electron sea moving.':'Electron sea stopped.');
+  if(on) requestAnimationFrame(seaLoop); else { seaE.forEach(e=>{e.el.setAttribute('cx',e.bx);e.el.setAttribute('cy',e.by);e.tx.setAttribute('x',e.bx);e.tx.setAttribute('y',e.by+1);}); }
+}
+$('motionToggle').addEventListener('click',()=>setMotion(!mOn));
+$('mCurrent').addEventListener('click',()=>{
+  mCurrent=!mCurrent; $('mCurrent').textContent=mCurrent?'Stop the current':'Pass a current →';
+  if(mCurrent&&!mOn) setMotion(true);
+  $('mText').innerHTML=mCurrent
+    ? 'A current flows: the <b>delocalised electrons drift in one direction</b>, carrying charge through the metal. That is why metals conduct.'
+    : 'Metal atoms lose their outer electrons. The electrons become <b>delocalised</b> — free to move between the fixed positive ions.';
+});
+
+/* =================== SELECT OPTIONS =================== */
+for(const k in METALS){const m=METALS[k],o=document.createElement('option');o.value=k;o.textContent=`${m.name} (${m.sym}) · group ${m.group}`;$('iMetal').appendChild(o);}
+for(const k in NONMETALS){const n=NONMETALS[k],o=document.createElement('option');o.value=k;o.textContent=`${n.ename} (${n.sym}) · group ${n.group}`;$('iNonmetal').appendChild(o);}
+$('iMetal').value='Na'; $('iNonmetal').value='Cl';
+function fillSelect(sel,obj){for(const k in obj){const o=document.createElement('option');o.value=k;o.textContent=obj[k].name+' — '+obj[k].formula;sel.appendChild(o);}}
+fillSelect($('cSelect'),COV); $('cSelect').value='H2O';
+
+/* =================== CURSOR + SPOTLIGHT =================== */
+document.querySelectorAll('.spotlight').forEach(el=>el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');}));
+if(!reduced()&&matchMedia('(pointer:fine)').matches){const c=$('cursor');let tx=innerWidth/2,ty=innerHeight/2,cx=tx,cy=ty;addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;},{passive:true});(function loop(){cx+=(tx-cx)*.12;cy+=(ty-cy)*.12;c.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;requestAnimationFrame(loop);})();}else{const c=$('cursor');if(c)c.style.display='none';}
+
+/* =================== INIT =================== */
+renderIonic();
+renderCovalent();
+renderMetallic();
+</script>
+</body>
+</html>
