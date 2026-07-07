@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rates &amp; Energy — Collision Theory &amp; Energy Changes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1813; --paper:#FAFAF7; --blue:#185FA5; --teal:#0F6E56;
+  --paper-2:#F2F1EC; --ink-soft:#4A4742; --line:#D8D5CC; --warn:#B4690E; --bad:#A23B3B;
+  --glass-bg:rgba(250,250,247,0.55); --glass-edge:rgba(255,255,255,0.65);
+  --glass-shadow:rgba(26,24,19,0.10); --focus:#185FA5;
+}
+*{box-sizing:border-box;}
+html{font-size:18px;}
+html,body{margin:0;padding:0;}
+body{font-family:'Atkinson Hyperlegible',system-ui,sans-serif;color:var(--ink);line-height:1.6;
+  min-height:100vh;padding:clamp(12px,2.5vw,28px);background:var(--paper);overflow-x:hidden;}
+h1,h2,h3{font-family:'Lexend',system-ui,sans-serif;margin:0;line-height:1.15;}
+p{margin:0;}
+a{color:inherit;}
+
+/* liquid background (subtle; freezes under reduced-motion) */
+.liquid{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(1100px 700px at 10% 0%,rgba(24,95,165,.10),transparent 60%),
+  radial-gradient(1000px 700px at 92% 100%,rgba(15,110,86,.10),transparent 60%),var(--paper);}
+.blob{position:absolute;width:46vw;height:46vw;border-radius:50%;filter:blur(80px);opacity:.34;mix-blend-mode:multiply;}
+.b1{left:-10vw;top:-8vw;background:radial-gradient(circle at 35% 35%,#A9CBEC,#185FA5);animation:d1 30s ease-in-out infinite;}
+.b2{right:-12vw;top:14vw;background:radial-gradient(circle at 40% 35%,#96D8C5,#0F6E56);animation:d2 36s ease-in-out infinite;}
+.b3{left:22vw;top:54vw;background:radial-gradient(circle at 35% 35%,#CFE2F4,#5EA0E0);animation:d3 34s ease-in-out infinite;opacity:.28;}
+@keyframes d1{50%{transform:translate(5vw,4vh) rotate(16deg) scale(1.1);border-radius:60% 40% 38% 62%/55% 62% 38% 45%;}}
+@keyframes d2{50%{transform:translate(-6vw,3vh) scale(1.14);border-radius:38% 62% 58% 42%/60% 40% 60% 40%;}}
+@keyframes d3{50%{transform:translate(4vw,-4vh) scale(1.08);border-radius:62% 38% 55% 45%/45% 55% 45% 55%;}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.cursor-glow{position:fixed;top:0;left:0;width:300px;height:300px;border-radius:50%;z-index:-1;pointer-events:none;
+  transform:translate(-50%,-50%);mix-blend-mode:multiply;filter:blur(45px);opacity:.4;
+  background:radial-gradient(circle,rgba(24,95,165,.24),transparent 65%);}
+
+.glass{background:var(--glass-bg);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--glass-edge);border-radius:20px;box-shadow:0 8px 32px var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.5);}
+.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;margin-bottom:4px;}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:1760px;margin:0 auto;padding:10px clamp(14px,2vw,22px);border-radius:18px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Lexend';font-weight:700;font-size:1.1rem;color:var(--ink);text-decoration:none;}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 4px 14px rgba(24,95,165,.3);font-weight:800;}
+.nav-back{font-family:'Lexend';font-weight:700;font-size:1rem;color:var(--ink-soft);text-decoration:none;padding:9px 14px;border-radius:11px;transition:background .2s,color .2s;}
+.nav-back:hover{background:rgba(255,255,255,.5);color:var(--ink);}
+.nav-back:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+
+/* header */
+.header{padding:clamp(20px,2.6vw,28px) clamp(20px,3vw,34px);}
+.header .eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--blue);text-transform:uppercase;margin-bottom:12px;}
+.tool-title{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:600;}
+.header .purpose{color:var(--ink-soft);margin-top:8px;max-width:64ch;}
+.grad{background:linear-gradient(110deg,var(--blue),var(--teal) 75%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+/* tabs */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px;}
+.tab{font-family:'Lexend';font-weight:600;font-size:clamp(1rem,1.7vw,1.18rem);padding:16px 14px;border-radius:14px;cursor:pointer;
+  border:2px solid transparent;background:transparent;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .15s,background .2s,color .2s;}
+.tab .tab-sub{font-family:'Atkinson Hyperlegible';font-weight:400;font-size:.86rem;color:var(--ink-soft);text-align:center;}
+.tab[aria-selected="true"]{background:var(--blue);color:#fff;box-shadow:0 6px 20px rgba(24,95,165,.30);}
+.tab[aria-selected="true"] .tab-sub{color:rgba(255,255,255,.92);}
+.tab:hover{transform:translateY(-2px);}
+.tab:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.spotlight{position:relative;overflow:hidden;}
+.spotlight::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(300px circle at var(--mx,50%) var(--my,50%),rgba(24,95,165,.14),transparent 60%);}
+.spotlight:hover::before{opacity:1;}
+
+/* workspace */
+.workspace{display:grid;gap:18px;grid-template-columns:1.9fr 1fr;grid-template-areas:"stage explain" "stage rail";align-items:stretch;}
+.stage{grid-area:stage;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:560px;}
+.explain{grid-area:explain;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+.rail{grid-area:rail;padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+@media(max-width:880px){.workspace{grid-template-columns:1fr;grid-template-areas:"stage" "explain" "rail";}}
+
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.stage-title{font-size:.82rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft);}
+.legend{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:700;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:var(--ink-soft);}
+.chip .dot{width:16px;height:16px;border-radius:50%;flex:none;}
+.chip.ra .dot{background:radial-gradient(circle at 35% 30%,#5EA0E0,#185FA5);}
+.chip.rb .dot{background:radial-gradient(circle at 35% 30%,#4FB596,#0F6E56);box-shadow:inset 0 0 0 3px rgba(255,255,255,.65);}
+.chip.pr .dot{background:radial-gradient(circle at 35% 30%,#D99A4E,#B4690E);border-radius:40% 60% 60% 40%;}
+
+.stage-frame{flex:1;border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--line);min-height:380px;display:flex;
+  background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.55),rgba(242,241,236,.25) 55%,rgba(216,213,204,.18) 100%);}
+svg.scene{width:100%;height:100%;display:block;}
+
+/* race counters (above the boxes) */
+.race-counters{display:flex;justify-content:space-between;gap:16px;}
+.counter{flex:1;border-radius:16px;padding:12px 18px;display:flex;align-items:center;gap:16px;border:1px solid var(--line);background:rgba(255,255,255,.55);}
+.counter .cnum{font-family:'Lexend';font-weight:700;font-size:clamp(2rem,3.5vw,2.9rem);line-height:1;min-width:1.6ch;text-align:center;color:var(--ink-soft);}
+.counter .clab{font-size:1rem;font-weight:700;color:var(--ink-soft);}
+.counter.c2{border-color:rgba(24,95,165,.5);background:rgba(24,95,165,.08);}
+.counter.c2 .cnum{color:var(--blue);}
+
+/* explain */
+.section-heading{font-size:clamp(1.15rem,2vw,1.4rem);font-weight:600;}
+.divider{height:1px;background:var(--line);border:0;margin:2px 0;}
+.rule-card{border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:rgba(255,255,255,.5);display:flex;flex-direction:column;gap:6px;}
+.rule-card .rl-title{font-weight:700;font-family:'Lexend';font-size:1.05rem;}
+.rule-card ul{margin:4px 0 0;padding-left:22px;} .rule-card li{margin:3px 0;}
+.sentence{border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;font-size:1.04rem;border:1px solid var(--line);background:rgba(255,255,255,.45);}
+.sentence .ico{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;font-family:'Lexend';}
+.sentence.good{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);} .sentence.good .ico{background:var(--teal);}
+.sentence.warn{background:rgba(180,105,14,.10);border-color:rgba(180,105,14,.40);} .sentence.warn .ico{background:var(--warn);}
+.sentence.info .ico{background:var(--blue);}
+.takeaway{margin-top:auto;border-radius:14px;padding:14px 16px;background:linear-gradient(120deg,rgba(24,95,165,.12),rgba(15,110,86,.12));border:1px solid var(--glass-edge);font-weight:700;display:flex;gap:10px;align-items:flex-start;}
+
+/* rail */
+.rail-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.sel-label{font-size:.85rem;font-weight:700;color:var(--ink-soft);margin:2px 0 -4px;}
+.select{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1.02rem;padding:.7rem;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.75);color:var(--ink);min-height:48px;width:100%;cursor:pointer;}
+.select:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1rem;padding:.75rem 1.2rem;border-radius:12px;min-height:48px;min-width:48px;
+  border:1px solid var(--glass-edge);cursor:pointer;transition:transform .15s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:9px;}
+.btn-primary{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(24,95,165,.32);}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(24,95,165,.42);}
+.btn-secondary{background:rgba(255,255,255,.5);backdrop-filter:blur(12px);color:var(--ink);}
+.btn-secondary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 26px var(--glass-shadow);}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;} .btn-row .btn{flex:1;}
+.type-btn{justify-content:flex-start;text-align:left;}
+.type-btn[aria-pressed="true"]{background:var(--teal);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(15,110,86,.32);}
+
+/* step indicator */
+.stepper{display:flex;align-items:center;gap:10px;}
+.stepdots{display:flex;gap:7px;}
+.stepdots i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .25s,transform .25s;}
+.stepdots i.on{background:var(--blue);transform:scale(1.25);}
+.step-label{font-size:.9rem;color:var(--ink-soft);font-weight:700;}
+
+.footnote{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:6px 0 2px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[hidden]{display:none !important;}
+
+@media (prefers-reduced-transparency: reduce),(prefers-contrast: more){
+  .glass,.btn-secondary{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .chip,.sentence,.stage-frame,.counter,.rule-card{background:var(--paper);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .blob{animation:none !important;} .cursor-glow{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="liquid" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursor" aria-hidden="true"></div>
+
+<nav class="nav" aria-label="Site">
+  <div class="nav-in glass">
+    <a class="brand" href="index.html"><span class="mark">◐</span>Dual&nbsp;Code</a>
+    <a class="nav-back" href="index.html">← All tools</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="header glass">
+    <p class="eyebrow">Chemistry · Rate of reaction · Energy changes · Dual-coding</p>
+    <h1 class="tool-title">Rates &amp; <span class="grad">Energy</span></h1>
+    <p class="purpose">Why do some reactions go faster? Race two boxes of particles and <b>count the products</b> — then see where the <b>energy</b> goes on a reaction profile.</p>
+  </header>
+
+  <nav class="modes glass" role="tablist" aria-label="Choose a mode">
+    <button class="tab spotlight" id="tabR" role="tab" aria-selected="true" aria-controls="modeR">Collision theory<span class="tab-sub">Race two boxes — what makes reactions faster?</span></button>
+    <button class="tab spotlight" id="tabE" role="tab" aria-selected="false" aria-controls="modeE" tabindex="-1">Energy changes<span class="tab-sub">Build a reaction profile, step by step</span></button>
+  </nav>
+
+  <!-- ===================== MODE R — COLLISION THEORY ===================== -->
+  <section id="modeR" role="tabpanel" aria-labelledby="tabR">
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">The reaction race</span>
+          <div class="legend" id="legendR">
+            <span class="chip ra"><span class="dot"></span>reactant A</span>
+            <span class="chip rb"><span class="dot"></span><span id="chipBtext">reactant B</span></span>
+            <span class="chip pr"><span class="dot"></span>product</span>
+          </div>
+        </div>
+        <div class="race-counters">
+          <div class="counter c1"><span class="cnum" id="cnt1">0</span><span class="clab" id="clab1">Box 1 — products made</span></div>
+          <div class="counter c2"><span class="cnum" id="cnt2">0</span><span class="clab" id="clab2">Box 2 — products made</span></div>
+        </div>
+        <div class="stage-frame">
+          <svg id="svgR" class="scene" viewBox="0 0 680 372" role="img" aria-label="Two boxes of particles side by side. Reactant A collides with reactant B to make products.">
+            <g id="boxG1" transform="translate(10,14)"></g>
+            <g id="boxG2" transform="translate(370,14)"></g>
+            <text id="boxLab1" x="160" y="362" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="19" fill="#4A4742">Box 1</text>
+            <text id="boxLab2" x="520" y="362" text-anchor="middle" font-family="Atkinson Hyperlegible" font-weight="700" font-size="19" fill="#4A4742">Box 2</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="explain glass">
+        <h2 class="section-heading" id="rHeading">Temperature</h2>
+        <div class="rule-card" id="rRule"></div>
+        <div class="sentence info" id="rSentence" role="status"><span class="ico" id="rIco">i</span><span id="rText">Both boxes hold the same reactants. Press <b>Run the race</b> and count which box makes more product.</span></div>
+        <div class="takeaway"><span>💡</span><span>Reactions happen when particles <b>collide with enough energy</b>. Anything that makes useful collisions happen more often makes the reaction faster.</span></div>
+      </div>
+
+      <div class="rail glass">
+        <span class="rail-title">Set up the race</span>
+        <label class="sel-label" for="rFactor">Change one factor</label>
+        <select class="select" id="rFactor" aria-label="Choose the factor to change">
+          <option value="temp">Temperature</option>
+          <option value="conc">Concentration</option>
+          <option value="surface">Surface area</option>
+          <option value="cat">Catalyst</option>
+        </select>
+        <button class="btn btn-primary" id="rRun">Run the race →</button>
+        <button class="btn btn-secondary" id="rReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MODE E — ENERGY CHANGES ===================== -->
+  <section id="modeE" role="tabpanel" aria-labelledby="tabE" hidden>
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Reaction profile</span>
+          <span class="chip" id="eBadge" style="border-color:rgba(15,110,86,.5)">Exothermic</span>
+        </div>
+        <div class="stage-frame">
+          <svg id="svgE" class="scene" viewBox="0 0 680 400" role="img" aria-label="A reaction profile graph of energy against progress of reaction.">
+            <g id="gAxes"></g>
+            <g id="gReact" style="display:none"></g>
+            <g id="gHill" style="display:none"></g>
+            <g id="gProd" style="display:none"></g>
+            <g id="gCat" style="display:none"></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="explain glass">
+        <h2 class="section-heading" id="eHeading">The axes</h2>
+        <div class="rule-card" id="eCard"></div>
+        <div class="sentence info" id="eSentence" role="status"><span class="ico" id="eIco">i</span><span id="eText">Energy goes up the side; the reaction runs left to right. Press <b>Next</b> to build the profile.</span></div>
+        <div class="takeaway"><span>💡</span><span>Exothermic: products end <b>lower</b> — energy given out. Endothermic: products end <b>higher</b> — energy taken in.</span></div>
+      </div>
+
+      <div class="rail glass">
+        <span class="rail-title">Reaction type</span>
+        <button class="btn btn-secondary type-btn" id="eExo" aria-pressed="true">🔥 Exothermic — gives out energy</button>
+        <button class="btn btn-secondary type-btn" id="eEndo" aria-pressed="false">🧊 Endothermic — takes in energy</button>
+        <hr class="divider">
+        <span class="rail-title">Build the profile</span>
+        <div class="stepper">
+          <div class="stepdots" id="eDots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+          <span class="step-label" id="eStepLabel">Step 1 of 4</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="eBack" disabled>← Back</button>
+          <button class="btn btn-primary" id="eNext">Next →</button>
+        </div>
+        <button class="btn btn-secondary" id="eCatBtn" aria-pressed="false" disabled>Add a catalyst</button>
+        <button class="btn btn-secondary" id="eReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote">Calm, reversible, trigger-only. Nothing moves until you press a button. Built on the SEND-first Dual Code design system.</p>
+</div>
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<script>
+"use strict";
+const $=(id)=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function E(n,a={}){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function live(t){$('live').textContent=t;}
+
+/* =================== TABS =================== */
+const tabs={R:$('tabR'),E:$('tabE')},panes={R:$('modeR'),E:$('modeE')};
+function selectTab(w){for(const k in tabs){const on=k===w;tabs[k].setAttribute('aria-selected',on);tabs[k].tabIndex=on?0:-1;panes[k].hidden=!on;}if(w!=='R')stopRun();}
+for(const k in tabs)tabs[k].addEventListener('click',()=>selectTab(k));
+
+/* =================== MODE R — collision race =================== */
+const BW=300,BH=320,PR=9;   // box width/height, particle radius
+const FACTORS={
+  temp:{name:'Temperature',lab1:'Cooler',lab2:'Hotter',
+    why:'Heating gives particles more energy.',
+    rules:['Particles move faster','Collisions happen more often','More collisions have enough energy to react'],
+    box1:{pairs:10,speed:55,prob:.35},box2:{pairs:10,speed:125,prob:.85}},
+  conc:{name:'Concentration',lab1:'Low concentration',lab2:'High concentration',
+    why:'More particles are squeezed into the same space.',
+    rules:['More particles in the same space','Collisions happen more often'],
+    box1:{pairs:6,speed:85,prob:.7},box2:{pairs:14,speed:85,prob:.7}},
+  surface:{name:'Surface area',lab1:'Large lumps',lab2:'Small pieces (powder)',solid:true,
+    why:'Smaller pieces expose more surface for particles to hit.',
+    rules:['Same amount of solid, broken smaller','More surface is exposed','Collisions happen more often'],
+    box1:{a:10,speed:90,prob:.6,lumps:[{x:150,y:105,r:33},{x:85,y:235,r:33},{x:222,y:232,r:33}]},
+    box2:{a:10,speed:90,prob:.6,lumps:(()=>{const l=[];[45,120,195,255].forEach(x=>[75,165,255].forEach(y=>l.push({x:x+((x*y)%13),y,r:15})));return l;})()}},
+  cat:{name:'Catalyst',lab1:'No catalyst',lab2:'With catalyst',
+    why:'A catalyst lowers the activation energy, so more collisions succeed. It is not used up.',
+    rules:['Same particles, same speed','Catalyst lowers the activation energy','More collisions have enough energy to react'],
+    box1:{pairs:10,speed:85,prob:.3},box2:{pairs:10,speed:85,prob:.85}}
+};
+let rFactorKey='temp', boxes=[], running=false, runUntil=0, rafId=0;
+
+function rnd(a,b){return a+Math.random()*(b-a);}
+function makeParticle(type,cfg){
+  const p={type,x:rnd(PR+4,BW-PR-4),y:rnd(PR+4,BH-PR-4),vx:0,vy:0,cool:0,node:null,static:false};
+  const sp=cfg.speed*rnd(.8,1.2),an=rnd(0,Math.PI*2);
+  p.vx=Math.cos(an)*sp; p.vy=Math.sin(an)*sp;
+  return p;
+}
+function overlapSolid(p,lumps){return lumps.some(l=>Math.hypot(p.x-l.x,p.y-l.y)<l.r+PR+4);}
+function particleNode(p){
+  const g=E('g',{});
+  if(p.type==='A'){g.appendChild(E('circle',{r:PR,fill:'url(#gA)'}));}
+  else if(p.type==='B'){g.appendChild(E('circle',{r:PR,fill:'url(#gB)',stroke:'rgba(255,255,255,.75)','stroke-width':3}));}
+  else if(p.type==='P'){g.appendChild(E('circle',{cx:-5,cy:0,r:8,fill:'url(#gP)'}));g.appendChild(E('circle',{cx:5,cy:0,r:8,fill:'url(#gP)'}));}
+  g.setAttribute('transform',`translate(${p.x},${p.y})`);
+  return g;
+}
+function buildBox(gid,cfg,solid){
+  const g=$(gid); g.innerHTML='';
+  g.appendChild(E('rect',{x:0,y:0,width:BW,height:BH,rx:14,fill:'rgba(255,255,255,.5)',stroke:'var(--line)','stroke-width':1.5}));
+  const layer=E('g',{}); g.appendChild(layer);
+  const box={parts:[],layer,count:0,cfg,solid:!!solid};
+  if(solid){
+    cfg.lumps.forEach(l=>{
+      layer.appendChild(E('circle',{cx:l.x,cy:l.y,r:l.r,fill:'url(#gB)',stroke:'rgba(255,255,255,.6)','stroke-width':2}));
+    });
+    for(let i=0;i<cfg.a;i++){let p=makeParticle('A',cfg),tries=0;while(overlapSolid(p,cfg.lumps)&&tries++<60){p.x=rnd(PR+4,BW-PR-4);p.y=rnd(PR+4,BH-PR-4);}p.node=particleNode(p);layer.appendChild(p.node);box.parts.push(p);}
+  } else {
+    for(let i=0;i<cfg.pairs;i++){['A','B'].forEach(t=>{const p=makeParticle(t,cfg);p.node=particleNode(p);layer.appendChild(p.node);box.parts.push(p);});}
+  }
+  return box;
+}
+function flash(box,x,y,instant){
+  if(instant||reduced())return;
+  const c=E('circle',{cx:x,cy:y,r:6,fill:'none',stroke:'var(--warn)','stroke-width':3,opacity:.9});
+  box.layer.appendChild(c);
+  c.animate([{r:6,opacity:.9},{r:26,opacity:0}],{duration:450,easing:'ease-out',fill:'forwards'}).finished.then(()=>c.remove()).catch(()=>{});
+}
+function spawnProduct(box,x,y,vx,vy){
+  const p={type:'P',x,y,vx,vy,cool:0,node:null};
+  p.node=particleNode(p); box.layer.appendChild(p.node); box.parts.push(p);
+}
+function stepBox(box,dt,now,instant){
+  const cfg=box.cfg, removals=new Set();
+  for(const p of box.parts){
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    if(p.x<PR){p.x=PR;p.vx=Math.abs(p.vx);} if(p.x>BW-PR){p.x=BW-PR;p.vx=-Math.abs(p.vx);}
+    if(p.y<PR){p.y=PR;p.vy=Math.abs(p.vy);} if(p.y>BH-PR){p.y=BH-PR;p.vy=-Math.abs(p.vy);}
+  }
+  // solid lumps: A bounces or reacts on contact
+  if(box.solid){
+    for(const p of box.parts){
+      if(p.type!=='A'||removals.has(p))continue;
+      for(const l of cfg.lumps){
+        const dx=p.x-l.x,dy=p.y-l.y,d=Math.hypot(dx,dy),min=l.r+PR;
+        if(d<min&&d>0){
+          const nx=dx/d,ny=dy/d;
+          if(now>p.cool&&Math.random()<cfg.prob){
+            removals.add(p); box.count++;
+            spawnProduct(box,l.x+nx*(l.r+12),l.y+ny*(l.r+12),nx*70,ny*70);
+            flash(box,p.x,p.y,instant);
+          } else {
+            p.cool=now+0.35;
+            p.x=l.x+nx*min; p.y=l.y+ny*min;
+            const dot=p.vx*nx+p.vy*ny; p.vx-=2*dot*nx; p.vy-=2*dot*ny;
+          }
+          break;
+        }
+      }
+    }
+  } else {
+    // A + B collisions
+    for(let i=0;i<box.parts.length;i++){
+      const a=box.parts[i]; if(removals.has(a))continue;
+      for(let j=i+1;j<box.parts.length;j++){
+        const b=box.parts[j]; if(removals.has(b))continue;
+        const pair=(a.type==='A'&&b.type==='B')||(a.type==='B'&&b.type==='A');
+        if(!pair)continue;
+        const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+        if(d<PR*2&&d>0){
+          if(now>a.cool&&now>b.cool&&Math.random()<cfg.prob){
+            removals.add(a);removals.add(b); box.count++;
+            spawnProduct(box,(a.x+b.x)/2,(a.y+b.y)/2,(a.vx+b.vx)/2,(a.vy+b.vy)/2);
+            flash(box,(a.x+b.x)/2,(a.y+b.y)/2,instant);
+          } else {
+            a.cool=now+0.35; b.cool=now+0.35;
+            const nx=dx/d,ny=dy/d, pa=a.vx*nx+a.vy*ny, pb=b.vx*nx+b.vy*ny;
+            if(pa-pb>0){a.vx+=(pb-pa)*nx;a.vy+=(pb-pa)*ny;b.vx+=(pa-pb)*nx;b.vy+=(pa-pb)*ny;}
+            const push=(PR*2-d)/2+0.5; a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;
+          }
+        }
+      }
+    }
+  }
+  if(removals.size){
+    box.parts=box.parts.filter(p=>{if(removals.has(p)){p.node.remove();return false;}return true;});
+  }
+  for(const p of box.parts) p.node.setAttribute('transform',`translate(${p.x},${p.y})`);
+}
+function setFactorText(){
+  const f=FACTORS[rFactorKey];
+  $('rHeading').textContent=f.name;
+  $('rRule').innerHTML=`<span class="rl-title">${f.why}</span><ul>${f.rules.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  $('clab1').textContent=`${f.lab1} — products made`;
+  $('clab2').textContent=`${f.lab2} — products made`;
+  $('boxLab1').textContent=`Box 1 — ${f.lab1}`;
+  $('boxLab2').textContent=`Box 2 — ${f.lab2}`;
+  $('chipBtext').textContent=f.solid?'solid reactant':'reactant B';
+  $('rSentence').className='sentence info'; $('rIco').textContent='i';
+  $('rText').innerHTML=`Same reaction, one change: <b>${f.name.toLowerCase()}</b>. Press <b>Run the race</b> and count which box makes more product.`;
+}
+function initRace(){
+  stopRun();
+  const f=FACTORS[rFactorKey];
+  boxes=[buildBox('boxG1',f.box1,f.solid),buildBox('boxG2',f.box2,f.solid)];
+  $('cnt1').textContent='0'; $('cnt2').textContent='0';
+}
+function updateCounts(){$('cnt1').textContent=boxes[0].count;$('cnt2').textContent=boxes[1].count;}
+function finishRace(){
+  running=false; $('rRun').disabled=false; $('rFactor').disabled=false;
+  $('rRun').textContent='Run again →';
+  const f=FACTORS[rFactorKey],c1=boxes[0].count,c2=boxes[1].count;
+  updateCounts();
+  if(c2>c1){
+    $('rSentence').className='sentence good'; $('rIco').textContent='✓';
+    $('rText').innerHTML=`<b>${f.lab2}</b> made <b>${c2}</b> products; <b>${f.lab1}</b> made <b>${c1}</b>. ${f.why} More useful collisions → faster reaction.`;
+  } else {
+    $('rSentence').className='sentence warn'; $('rIco').textContent='↻';
+    $('rText').innerHTML=`Close one — <b>${f.lab2}</b> made <b>${c2}</b> and <b>${f.lab1}</b> made <b>${c1}</b>. Chance plays a part in every experiment. Run it again to see the pattern.`;
+  }
+  live(`Race finished. ${f.lab2}: ${c2} products. ${f.lab1}: ${c1} products.`);
+}
+function stopRun(){running=false;if(rafId)cancelAnimationFrame(rafId);rafId=0;}
+function runRace(){
+  if(running)return;
+  initRace();
+  running=true; $('rRun').disabled=true; $('rFactor').disabled=true; $('rRun').textContent='Running…';
+  live('Race running.');
+  if(reduced()||document.hidden){
+    // motion-free path: compute the whole run instantly and show the result
+    let now=0; for(let i=0;i<420;i++){now+=1/60;boxes.forEach(b=>stepBox(b,1/60,now,true));}
+    finishRace(); return;
+  }
+  const t0=performance.now(); let last=t0; runUntil=t0+7000;
+  const loop=(t)=>{
+    if(!running)return;
+    const dt=Math.min((t-last)/1000,.032); last=t;
+    const now=(t-t0)/1000;
+    boxes.forEach(b=>stepBox(b,dt,now,false));
+    updateCounts();
+    if(t<runUntil){rafId=requestAnimationFrame(loop);}
+    else finishRace();
+  };
+  rafId=requestAnimationFrame(loop);
+}
+$('rFactor').addEventListener('change',e=>{rFactorKey=e.target.value;setFactorText();initRace();$('rRun').textContent='Run the race →';});
+$('rRun').addEventListener('click',runRace);
+$('rReset').addEventListener('click',()=>{setFactorText();initRace();$('rRun').disabled=false;$('rFactor').disabled=false;$('rRun').textContent='Run the race →';});
+
+/* particle gradients (shared defs) */
+(function(){
+  const defs=E('defs',{});
+  [['gA','#5EA0E0','#185FA5'],['gB','#4FB596','#0F6E56'],['gP','#D99A4E','#B4690E']].forEach(([id,hi,lo])=>{
+    const g=E('radialGradient',{id,cx:'35%',cy:'30%',r:'75%'});
+    g.appendChild(E('stop',{offset:'0%','stop-color':hi}));
+    g.appendChild(E('stop',{offset:'100%','stop-color':lo}));
+    defs.appendChild(g);
+  });
+  $('svgR').insertBefore(defs,$('svgR').firstChild);
+})();
+
+/* =================== MODE E — energy profiles =================== */
+const PROF={
+  exo :{ry:210,py:300,peak:80,cpeak:150,badge:'Exothermic', word:'released to the surroundings — it gets warmer', arrow:'var(--teal)', dir:'down'},
+  endo:{ry:300,py:170,peak:80,cpeak:160,badge:'Endothermic',word:'taken in from the surroundings — it gets colder', arrow:'var(--warn)', dir:'up'}
+};
+let eType='exo', eStep=0, eCat=false;
+const ESTEPS=[
+  {h:'The axes',card:'<span class="rl-title">Energy up the side; progress of reaction along the bottom.</span>',say:'Step 1 of 4. The axes: energy against progress of reaction.'},
+  {h:'Reactants',card:'<span class="rl-title">Reactants — the starting chemicals.</span><ul><li>They hold stored chemical energy</li></ul>',say:'Step 2 of 4. The reactants start with stored energy.'},
+  {h:'Activation energy',card:'<span class="rl-title">The energy hill.</span><ul><li>Colliding particles must have at least this much energy to react</li><li>This minimum is the <b>activation energy</b></li></ul>',say:'Step 3 of 4. The activation energy is the hill the particles must climb.'},
+  {h:'Products',card:'',say:'Step 4 of 4. Compare the product level with the reactant level.'}
+];
+function txt(x,y,str,size,fill,anchor='middle',weight=700){
+  const t=E('text',{x,y,'text-anchor':anchor,'font-family':'Atkinson Hyperlegible','font-weight':weight,'font-size':size,fill:fill});
+  t.textContent=str; return t;
+}
+function arrowV(g,x,y1,y2,color){ // vertical double-headed arrow
+  g.appendChild(E('line',{x1:x,y1,x2:x,y2,stroke:color,'stroke-width':2.5}));
+  const s=7,d1=y2>y1?1:-1;
+  g.appendChild(E('path',{d:`M${x-s} ${y1+d1*s} L${x} ${y1} L${x+s} ${y1+d1*s}`,fill:'none',stroke:color,'stroke-width':2.5}));
+  g.appendChild(E('path',{d:`M${x-s} ${y2-d1*s} L${x} ${y2} L${x+s} ${y2-d1*s}`,fill:'none',stroke:color,'stroke-width':2.5}));
+}
+function drawE(){
+  const P=PROF[eType];
+  // axes
+  const gA=$('gAxes'); gA.innerHTML='';
+  gA.appendChild(E('line',{x1:70,y1:350,x2:650,y2:350,stroke:'var(--ink-soft)','stroke-width':2.5}));
+  gA.appendChild(E('path',{d:'M642 344 L652 350 L642 356',fill:'none',stroke:'var(--ink-soft)','stroke-width':2.5}));
+  gA.appendChild(E('line',{x1:70,y1:350,x2:70,y2:44,stroke:'var(--ink-soft)','stroke-width':2.5}));
+  gA.appendChild(E('path',{d:'M64 52 L70 42 L76 52',fill:'none',stroke:'var(--ink-soft)','stroke-width':2.5}));
+  gA.appendChild(txt(360,382,'progress of reaction →',17,'#4A4742'));
+  const yl=txt(38,200,'energy →',17,'#4A4742'); yl.setAttribute('transform','rotate(-90 38 200)'); gA.appendChild(yl);
+  // reactants
+  const gR=$('gReact'); gR.innerHTML='';
+  gR.appendChild(E('line',{x1:80,y1:P.ry,x2:200,y2:P.ry,stroke:'var(--ink)','stroke-width':3.5}));
+  gR.appendChild(txt(140,P.ry-12,'reactants',17,'var(--ink)'));
+  // hill + Ea
+  const gH=$('gHill'); gH.innerHTML='';
+  gH.appendChild(E('path',{d:`M200 ${P.ry} C270 ${P.ry} 285 ${P.peak} 330 ${P.peak} C378 ${P.peak} 392 ${P.py} 460 ${P.py}`,fill:'none',stroke:'var(--blue)','stroke-width':3.5}));
+  gH.appendChild(E('line',{x1:200,y1:P.ry,x2:330,y2:P.ry,stroke:'var(--ink-soft)','stroke-width':1.5,'stroke-dasharray':'4 6'}));
+  arrowV(gH,330,P.peak+4,P.ry-4,'var(--ink-soft)');
+  gH.appendChild(txt(342,(P.peak+P.ry)/2,'activation energy',16,'#4A4742','start'));
+  // products + overall change
+  const gP=$('gProd'); gP.innerHTML='';
+  gP.appendChild(E('line',{x1:460,y1:P.py,x2:640,y2:P.py,stroke:'var(--ink)','stroke-width':3.5}));
+  gP.appendChild(txt(550,P.py+(P.dir==='down'?24:-12),'products',17,'var(--ink)'));
+  gP.appendChild(E('line',{x1:460,y1:P.ry,x2:600,y2:P.ry,stroke:'var(--ink-soft)','stroke-width':1.5,'stroke-dasharray':'4 6'}));
+  arrowV(gP,590,Math.min(P.ry,P.py)+4,Math.max(P.ry,P.py)-4,P.arrow);
+  gP.appendChild(txt(600,(P.ry+P.py)/2-6,'energy',16,P.arrow,'start'));
+  gP.appendChild(txt(600,(P.ry+P.py)/2+14,eType==='exo'?'given out':'taken in',16,P.arrow,'start'));
+  // catalyst
+  const gC=$('gCat'); gC.innerHTML='';
+  gC.appendChild(E('path',{d:`M200 ${P.ry} C270 ${P.ry} 285 ${P.cpeak} 330 ${P.cpeak} C378 ${P.cpeak} 392 ${P.py} 460 ${P.py}`,fill:'none',stroke:'var(--teal)','stroke-width':3,'stroke-dasharray':'7 7'}));
+  gC.appendChild(txt(330,P.cpeak-12,'with catalyst — lower hill',16,'var(--teal)'));
+  $('eBadge').textContent=P.badge;
+  $('eBadge').style.borderColor = eType==='exo' ? 'rgba(15,110,86,.5)' : 'rgba(180,105,14,.5)';
+  $('svgE').setAttribute('aria-label',`Reaction profile for an ${P.badge.toLowerCase()} reaction.`);
+}
+function renderE(){
+  const P=PROF[eType], s=ESTEPS[eStep];
+  $('gReact').style.display = eStep>=1?'block':'none';
+  $('gHill').style.display  = eStep>=2?'block':'none';
+  $('gProd').style.display  = eStep>=3?'block':'none';
+  $('gCat').style.display   = (eCat&&eStep>=2)?'block':'none';
+  $('eHeading').textContent = s.h;
+  if(eStep===3){
+    $('eCard').innerHTML = eType==='exo'
+      ? '<span class="rl-title">Products end LOWER than reactants.</span><ul><li>The difference is <b>released</b> to the surroundings</li><li>The surroundings get <b>warmer</b></li><li>Examples: combustion, neutralisation</li></ul>'
+      : '<span class="rl-title">Products end HIGHER than reactants.</span><ul><li>The difference is <b>taken in</b> from the surroundings</li><li>The surroundings get <b>colder</b></li><li>Examples: thermal decomposition, sports injury packs</li></ul>';
+  } else $('eCard').innerHTML=s.card;
+  $('eSentence').className='sentence info'; $('eIco').textContent='i';
+  $('eText').innerHTML = eStep===3
+    ? `This is an <b>${P.badge.toLowerCase()}</b> reaction: the energy difference is ${P.word}.`
+    : s.card.replace(/<[^>]+>/g,' ').trim()+' Press <b>Next</b>.';
+  [...$('eDots').children].forEach((d,i)=>d.classList.toggle('on',i===eStep));
+  $('eStepLabel').textContent=`Step ${eStep+1} of 4`;
+  $('eBack').disabled=eStep===0;
+  $('eNext').disabled=eStep===3;
+  $('eCatBtn').disabled=eStep<2;
+  $('eCatBtn').textContent=eCat?'Remove the catalyst':'Add a catalyst';
+  $('eCatBtn').setAttribute('aria-pressed',eCat);
+  live(s.say+(eCat&&eStep>=2?' A catalyst gives a lower hill.':''));
+}
+function setEType(t){
+  eType=t;
+  $('eExo').setAttribute('aria-pressed',t==='exo');
+  $('eEndo').setAttribute('aria-pressed',t==='endo');
+  drawE(); renderE();
+}
+$('eExo').addEventListener('click',()=>setEType('exo'));
+$('eEndo').addEventListener('click',()=>setEType('endo'));
+$('eNext').addEventListener('click',()=>{if(eStep<3){eStep++;renderE();}});
+$('eBack').addEventListener('click',()=>{if(eStep>0){eStep--;renderE();}});
+$('eCatBtn').addEventListener('click',()=>{
+  eCat=!eCat; renderE();
+  if(eCat){$('eSentence').className='sentence good';$('eIco').textContent='✓';
+    $('eText').innerHTML='The <b>catalyst</b> gives the reaction a lower hill — a lower activation energy — so more collisions succeed. The reactant and product levels do <b>not</b> move.';
+    live('Catalyst added: lower activation energy, same start and end levels.');}
+});
+$('eReset').addEventListener('click',()=>{eStep=0;eCat=false;renderE();});
+
+/* =================== cursor + spotlight =================== */
+document.querySelectorAll('.spotlight').forEach(el=>el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');}));
+if(!reduced()&&matchMedia('(pointer:fine)').matches){const c=$('cursor');let tx=innerWidth/2,ty=innerHeight/2,cx=tx,cy=ty;addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;},{passive:true});(function loop(){cx+=(tx-cx)*.12;cy+=(ty-cy)*.12;c.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;requestAnimationFrame(loop);})();}else{const c=$('cursor');if(c)c.style.display='none';}
+
+/* =================== INIT =================== */
+setFactorText();
+initRace();
+drawE();
+renderE();
+</script>
+</body>
+</html>
