@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossing the Membrane — Diffusion, Osmosis & Active Transport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1813; --paper:#FAFAF7; --blue:#185FA5; --teal:#0F6E56;
+  --paper-2:#F2F1EC; --ink-soft:#4A4742; --line:#D8D5CC; --warn:#B4690E; --bad:#A23B3B;
+  --glass-bg:rgba(250,250,247,0.55); --glass-edge:rgba(255,255,255,0.65);
+  --glass-shadow:rgba(26,24,19,0.10); --focus:#185FA5;
+  --solute:#C06A6A;     /* dissolved particles / solute (red, "big") */
+  --water:#2E7CD6;      /* water molecules (blue, "small") */
+  --particle:#0F6E56;   /* generic substance particle (teal) */
+  --energy:#B4690E;     /* ATP / energy (amber) */
+}
+*{box-sizing:border-box;}
+html{font-size:18px;}
+html,body{margin:0;padding:0;}
+body{font-family:'Atkinson Hyperlegible',system-ui,sans-serif;color:var(--ink);line-height:1.6;
+  min-height:100vh;padding:clamp(12px,2.5vw,28px);background:var(--paper);overflow-x:hidden;}
+h1,h2,h3{font-family:'Lexend',system-ui,sans-serif;margin:0;line-height:1.15;}
+p{margin:0;}
+a{color:inherit;}
+
+.liquid{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(1100px 700px at 10% 0%,rgba(24,95,165,.10),transparent 60%),
+  radial-gradient(1000px 700px at 92% 100%,rgba(15,110,86,.10),transparent 60%),var(--paper);}
+.blob{position:absolute;width:46vw;height:46vw;border-radius:50%;filter:blur(80px);opacity:.34;mix-blend-mode:multiply;}
+.b1{left:-10vw;top:-8vw;background:radial-gradient(circle at 35% 35%,#A9CBEC,#185FA5);animation:d1 30s ease-in-out infinite;}
+.b2{right:-12vw;top:14vw;background:radial-gradient(circle at 40% 35%,#96D8C5,#0F6E56);animation:d2 36s ease-in-out infinite;}
+.b3{left:22vw;top:54vw;background:radial-gradient(circle at 35% 35%,#CFE2F4,#5EA0E0);animation:d3 34s ease-in-out infinite;opacity:.28;}
+@keyframes d1{50%{transform:translate(5vw,4vh) rotate(16deg) scale(1.1);border-radius:60% 40% 38% 62%/55% 62% 38% 45%;}}
+@keyframes d2{50%{transform:translate(-6vw,3vh) scale(1.14);border-radius:38% 62% 58% 42%/60% 40% 60% 40%;}}
+@keyframes d3{50%{transform:translate(4vw,-4vh) scale(1.08);border-radius:62% 38% 55% 45%/45% 55% 45% 55%;}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.cursor-glow{position:fixed;top:0;left:0;width:300px;height:300px;border-radius:50%;z-index:-1;pointer-events:none;
+  transform:translate(-50%,-50%);mix-blend-mode:multiply;filter:blur(45px);opacity:.4;
+  background:radial-gradient(circle,rgba(24,95,165,.24),transparent 65%);}
+
+.glass{background:var(--glass-bg);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  border:1px solid var(--glass-edge);border-radius:20px;box-shadow:0 8px 32px var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.5);}
+.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+
+.nav{position:sticky;top:0;z-index:50;margin-bottom:4px;}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:1760px;margin:0 auto;padding:10px clamp(14px,2vw,22px);border-radius:18px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Lexend';font-weight:700;font-size:1.1rem;color:var(--ink);text-decoration:none;}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--teal));box-shadow:0 4px 14px rgba(24,95,165,.3);font-weight:800;}
+.nav-back{font-family:'Lexend';font-weight:700;font-size:1rem;color:var(--ink-soft);text-decoration:none;padding:9px 14px;border-radius:11px;transition:background .2s,color .2s;}
+.nav-back:hover{background:rgba(255,255,255,.5);color:var(--ink);}
+.nav-back:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+
+.header{padding:clamp(20px,2.6vw,28px) clamp(20px,3vw,34px);}
+.header .eyebrow{font-family:'Lexend';font-weight:700;letter-spacing:.14em;font-size:.8rem;color:var(--blue);text-transform:uppercase;margin-bottom:12px;}
+.tool-title{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:600;}
+.header .purpose{color:var(--ink-soft);margin-top:8px;max-width:64ch;}
+.grad{background:linear-gradient(110deg,var(--blue),var(--teal) 75%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:10px;}
+.tab{font-family:'Lexend';font-weight:600;font-size:clamp(1rem,1.7vw,1.18rem);padding:16px 14px;border-radius:14px;cursor:pointer;
+  border:2px solid transparent;background:transparent;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .15s,background .2s,color .2s;}
+.tab .tab-sub{font-family:'Atkinson Hyperlegible';font-weight:400;font-size:.86rem;color:var(--ink-soft);text-align:center;}
+.tab[aria-selected="true"]{background:var(--blue);color:#fff;box-shadow:0 6px 20px rgba(24,95,165,.30);}
+.tab[aria-selected="true"] .tab-sub{color:rgba(255,255,255,.92);}
+.tab:hover{transform:translateY(-2px);}
+.tab:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.spotlight{position:relative;overflow:hidden;}
+.spotlight::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .35s;pointer-events:none;
+  background:radial-gradient(300px circle at var(--mx,50%) var(--my,50%),rgba(24,95,165,.14),transparent 60%);}
+.spotlight:hover::before{opacity:1;}
+
+.workspace{display:grid;gap:18px;grid-template-columns:1.9fr 1fr;grid-template-areas:"stage explain" "stage rail";align-items:stretch;}
+.stage{grid-area:stage;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:560px;}
+.explain{grid-area:explain;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+.rail{grid-area:rail;padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+@media(max-width:880px){.workspace{grid-template-columns:1fr;grid-template-areas:"stage" "explain" "rail";}}
+
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.stage-title{font-size:.82rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft);}
+.legend{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:700;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:var(--ink-soft);}
+.chip .dot{width:16px;height:16px;border-radius:50%;flex:none;}
+.chip.particle .dot{background:var(--particle);}
+.chip.water .dot{width:11px;height:11px;background:var(--water);}
+.chip.solute .dot{width:18px;height:18px;background:radial-gradient(circle at 35% 30%,#E0A0A0,#9A4A4A);}
+.chip.energy .dot{background:var(--energy);}
+
+.stage-frame{flex:1;border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--line);min-height:400px;display:flex;
+  background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.55),rgba(242,241,236,.25) 55%,rgba(216,213,204,.18) 100%);}
+svg.scene{width:100%;height:100%;display:block;}
+
+.section-heading{font-size:clamp(1.15rem,2vw,1.4rem);font-weight:600;}
+.result-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.pill{font-family:'Lexend';font-weight:700;font-size:.9rem;padding:6px 13px;border-radius:999px;color:#fff;}
+.pill.diffusion{background:var(--teal);} .pill.osmosis{background:var(--water);} .pill.active{background:var(--energy);}
+.divider{height:1px;background:var(--line);border:0;margin:2px 0;}
+.conc{display:flex;gap:12px;}
+.conc .side{flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 10px;text-align:center;background:rgba(255,255,255,.5);}
+.conc .side .n{font-family:'Lexend';font-weight:800;font-size:2.1rem;line-height:1;}
+.conc .side .lab{font-size:.85rem;font-weight:700;color:var(--ink-soft);margin-top:5px;}
+.conc .side.high .n{color:var(--solute);} .conc .side.low .n{color:var(--water);} .conc .side.eq .n{color:var(--teal);}
+.sentence{border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;font-size:1.04rem;border:1px solid var(--line);background:rgba(255,255,255,.45);}
+.sentence .ico{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;font-family:'Lexend';}
+.sentence.good{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);} .sentence.good .ico{background:var(--teal);}
+.sentence.warn{background:rgba(180,105,14,.10);border-color:rgba(180,105,14,.40);} .sentence.warn .ico{background:var(--warn);}
+.sentence.info .ico{background:var(--blue);}
+.takeaway{margin-top:auto;border-radius:14px;padding:14px 16px;background:linear-gradient(120deg,rgba(24,95,165,.12),rgba(15,110,86,.12));border:1px solid var(--glass-edge);font-weight:700;display:flex;gap:10px;align-items:flex-start;}
+
+.rail-title{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+.atp-count{font-family:'Lexend';font-weight:700;font-size:1rem;color:var(--ink-soft);display:flex;align-items:center;gap:8px;justify-content:center;
+  border:1px solid var(--line);border-radius:12px;padding:10px;background:rgba(180,105,14,.06);}
+.atp-count b{color:var(--energy);font-size:1.5rem;}
+.btn{font-family:'Atkinson Hyperlegible';font-weight:700;font-size:1rem;padding:.75rem 1.2rem;border-radius:12px;min-height:48px;min-width:48px;
+  border:1px solid var(--glass-edge);cursor:pointer;transition:transform .15s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:9px;}
+.btn-primary{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(24,95,165,.32);}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(24,95,165,.42);}
+.btn-secondary{background:rgba(255,255,255,.5);backdrop-filter:blur(12px);color:var(--ink);}
+.btn-secondary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 26px var(--glass-shadow);}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px;}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.footnote{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:6px 0 2px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[hidden]{display:none !important;}
+
+@media (prefers-reduced-transparency: reduce),(prefers-contrast: more){
+  .glass,.btn-secondary{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .chip,.sentence,.stage-frame,.conc .side,.atp-count{background:var(--paper);}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .blob{animation:none !important;} .cursor-glow{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="liquid" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" id="cursor" aria-hidden="true"></div>
+
+<nav class="nav" aria-label="Site">
+  <div class="nav-in glass">
+    <a class="brand" href="index.html"><span class="mark">◐</span>Dual&nbsp;Code</a>
+    <a class="nav-back" href="index.html">← All tools</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="header glass">
+    <p class="eyebrow">Biology · Cell transport · Dual-coding</p>
+    <h1 class="tool-title">Crossing the <span class="grad">Membrane</span></h1>
+    <p class="purpose">Three ways things move in and out of cells. Watch what crosses the membrane, and which way it goes — <b>down</b> a gradient, or <b>against</b> it.</p>
+  </header>
+
+  <nav class="modes glass" role="tablist" aria-label="Choose a type of transport">
+    <button class="tab spotlight" id="tabD" role="tab" aria-selected="true" aria-controls="modeD">Diffusion<span class="tab-sub">high → low · no energy</span></button>
+    <button class="tab spotlight" id="tabO" role="tab" aria-selected="false" aria-controls="modeO" tabindex="-1">Osmosis<span class="tab-sub">water · dilute → concentrated</span></button>
+    <button class="tab spotlight" id="tabA" role="tab" aria-selected="false" aria-controls="modeA" tabindex="-1">Active transport<span class="tab-sub">low → high · needs energy</span></button>
+  </nav>
+
+  <!-- ============ DIFFUSION ============ -->
+  <section id="modeD" role="tabpanel" aria-labelledby="tabD">
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Particles spreading out</span>
+          <div class="legend"><span class="chip particle"><span class="dot"></span>particle</span></div>
+        </div>
+        <div class="stage-frame"><svg id="svgD" class="scene" viewBox="0 0 640 440" role="img" aria-label="A box with a permeable membrane. Particles start on the left."></svg></div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading">Diffusion</h2>
+        <div class="result-row"><span class="pill diffusion">Passive · no energy</span></div>
+        <div class="conc">
+          <div class="side high" id="dL"><div class="n" id="dLn">12</div><div class="lab" id="dLlab">LEFT — high</div></div>
+          <div class="side low" id="dR"><div class="n" id="dRn">0</div><div class="lab" id="dRlab">RIGHT — low</div></div>
+        </div>
+        <div class="sentence info" id="dSent" role="status"><span class="ico" id="dIco">i</span><span id="dText">All the particles are on the left (high concentration). The right side is low. Press <b>Diffuse</b>.</span></div>
+        <div class="takeaway"><span>💡</span><span>Particles spread from a <b>high</b> to a <b>low</b> concentration until evenly mixed. This is diffusion — it needs <b>no energy</b>.</span></div>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Watch it happen</span>
+        <button class="btn btn-primary" id="dGo">Diffuse →</button>
+        <button class="btn btn-secondary" id="dReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OSMOSIS ============ -->
+  <section id="modeO" role="tabpanel" aria-labelledby="tabO" hidden>
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Water crossing a partially permeable membrane</span>
+          <div class="legend"><span class="chip water"><span class="dot"></span>water</span><span class="chip solute"><span class="dot"></span>solute (too big)</span></div>
+        </div>
+        <div class="stage-frame"><svg id="svgO" class="scene" viewBox="0 0 640 440" role="img" aria-label="Two compartments split by a partially permeable membrane. The right side is a more concentrated solution."></svg></div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading">Osmosis</h2>
+        <div class="result-row"><span class="pill osmosis">Water only · passive</span></div>
+        <div class="conc">
+          <div class="side low" id="oL"><div class="n" style="font-size:1.3rem" id="oLn">dilute</div><div class="lab">LEFT — lots of water</div></div>
+          <div class="side high" id="oR"><div class="n" style="font-size:1.3rem" id="oRn">concentrated</div><div class="lab">RIGHT — more solute</div></div>
+        </div>
+        <div class="sentence info" id="oSent" role="status"><span class="ico" id="oIco">i</span><span id="oText">The right side has more solute. Water can cross the membrane, but the solute is too big. Press <b>Run osmosis</b>.</span></div>
+        <div class="takeaway"><span>💡</span><span>Water moves across a <b>partially permeable</b> membrane, from a <b>dilute</b> to a <b>concentrated</b> solution. This is osmosis.</span></div>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Watch it happen</span>
+        <button class="btn btn-primary" id="oGo">Run osmosis →</button>
+        <button class="btn btn-secondary" id="oReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACTIVE TRANSPORT ============ -->
+  <section id="modeA" role="tabpanel" aria-labelledby="tabA" hidden>
+    <div class="workspace">
+      <div class="stage glass">
+        <div class="stage-head">
+          <span class="stage-title">Pumping against the gradient</span>
+          <div class="legend"><span class="chip particle"><span class="dot"></span>particle</span><span class="chip energy"><span class="dot"></span>ATP (energy)</span></div>
+        </div>
+        <div class="stage-frame"><svg id="svgA" class="scene" viewBox="0 0 640 440" role="img" aria-label="A membrane with a carrier protein. Particles must move from the low side to the already-high side."></svg></div>
+      </div>
+      <div class="explain glass">
+        <h2 class="section-heading">Active transport</h2>
+        <div class="result-row"><span class="pill active">Uphill · needs energy</span></div>
+        <div class="conc">
+          <div class="side low" id="aL"><div class="n" id="aLn">3</div><div class="lab">LEFT — low</div></div>
+          <div class="side high" id="aR"><div class="n" id="aRn">5</div><div class="lab">RIGHT — high</div></div>
+        </div>
+        <div class="sentence info" id="aSent" role="status"><span class="ico" id="aIco">i</span><span id="aText">The right side is already <b>high</b>. To move a particle from low to high is <b>uphill</b> — it needs energy. Press <b>Pump</b>.</span></div>
+        <div class="takeaway"><span>💡</span><span>Active transport moves particles from <b>low</b> to <b>high</b> concentration — against the gradient — so it needs <b>energy</b> from respiration (ATP).</span></div>
+      </div>
+      <div class="rail glass">
+        <span class="rail-title">Use energy to pump</span>
+        <div class="atp-count">ATP left: <b id="atpN">4</b></div>
+        <button class="btn btn-primary" id="aGo">Pump one (uses ATP) →</button>
+        <button class="btn btn-secondary" id="aReset">↻ Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote">Calm, reversible, trigger-only. Nothing moves until you press a button. Built on the SEND-first Dual Code design system.</p>
+</div>
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<script>
+"use strict";
+const $=(id)=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE='cubic-bezier(0.4,0,0.2,1)';
+function E(n,a={}){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function anim(node,frames,opts){const o=Object.assign({easing:EASE,fill:'forwards'},opts);if(reduced())o.duration=1;return node.animate(frames,o).finished.catch(()=>{});}
+function live(t){$('live').textContent=t;}
+function setSent(id,ico,html,kind){$(id).className='sentence '+kind;$(ico).textContent=kind==='good'?'✓':kind==='warn'?'!':'i';}
+
+/* box + membrane + side labels */
+function container(svg,membrane){
+  svg.appendChild(E('rect',{x:40,y:44,width:560,height:356,rx:16,fill:'rgba(255,255,255,.25)',stroke:'var(--ink-soft)','stroke-width':2}));
+  if(membrane==='permeable') svg.appendChild(E('line',{x1:320,y1:44,x2:320,y2:400,stroke:'var(--ink-soft)','stroke-width':4,'stroke-dasharray':'8 16','stroke-linecap':'round',opacity:.7}));
+  if(membrane==='partial')   svg.appendChild(E('line',{x1:320,y1:44,x2:320,y2:400,stroke:'var(--ink-soft)','stroke-width':4,'stroke-dasharray':'4 11','stroke-linecap':'round',opacity:.7}));
+}
+function label(svg,x,text,color){const t=E('text',{x,y:74,'text-anchor':'middle','font-family':'Lexend','font-weight':700,'font-size':16,fill:color||'var(--ink-soft)'});t.textContent=text;svg.appendChild(t);}
+function particle(svg,x,y,r,color){
+  const g=E('g',{transform:`translate(${x},${y})`});
+  g.appendChild(E('circle',{cx:0,cy:0,r,fill:color,stroke:'rgba(255,255,255,.5)','stroke-width':1.5}));
+  g.appendChild(E('ellipse',{cx:-r*0.3,cy:-r*0.35,rx:r*0.32,ry:r*0.22,fill:'rgba(255,255,255,.55)'}));
+  svg.appendChild(g); return g;
+}
+
+/* =================== TABS =================== */
+const tabs={D:$('tabD'),O:$('tabO'),A:$('tabA')}, panes={D:$('modeD'),O:$('modeO'),A:$('modeA')};
+function selectTab(w){for(const k in tabs){const on=k===w;tabs[k].setAttribute('aria-selected',on);tabs[k].tabIndex=on?0:-1;panes[k].hidden=!on;}}
+for(const k in tabs) tabs[k].addEventListener('click',()=>selectTab(k));
+
+/* =================== DIFFUSION =================== */
+let dParts=[], dDone=false;
+const startD=[], endD=[];
+[90,165,240].forEach(x=>[95,175,255,335].forEach(y=>startD.push([x,y])));      // 12 on the left
+[110,250,395,535].forEach((x,ci)=>[130,240,350].forEach(y=>endD.push([x,y]))); // 12 spread across
+function renderD(){
+  const svg=$('svgD'); svg.innerHTML=''; dDone=false; dParts=[];
+  container(svg,'permeable'); label(svg,180,'HIGH concentration'); label(svg,460,'LOW concentration');
+  startD.forEach(([x,y])=>dParts.push(particle(svg,x,y,10,'var(--particle)')));
+  $('dLn').textContent='12'; $('dRn').textContent='0';
+  $('dL').className='side high'; $('dR').className='side low';
+  $('dLlab').textContent='LEFT — high'; $('dRlab').textContent='RIGHT — low';
+  $('dSent').className='sentence info'; $('dIco').textContent='i';
+  $('dText').innerHTML='All the particles are on the left (high concentration). The right side is low. Press <b>Diffuse</b>.';
+  $('dGo').disabled=false;
+}
+async function diffuse(){
+  if(dDone) return; dDone=true; $('dGo').disabled=true;
+  await Promise.all(dParts.map((g,i)=>{
+    const [sx,sy]=startD[i], [tx,ty]=endD[i];
+    const mx=(sx+tx)/2+(Math.random()*80-40), my=(sy+ty)/2+(Math.random()*70-35);
+    return anim(g,[
+      {transform:`translate(${sx}px,${sy}px)`},
+      {transform:`translate(${mx}px,${my}px)`,offset:.5},
+      {transform:`translate(${tx}px,${ty}px)`}
+    ],{duration:2400,easing:'ease-in-out'});
+  }));
+  $('dLn').textContent='6'; $('dRn').textContent='6';
+  $('dL').className='side eq'; $('dR').className='side eq';
+  $('dLlab').textContent='LEFT — equal'; $('dRlab').textContent='RIGHT — equal';
+  $('dSent').className='sentence good'; $('dIco').textContent='✓';
+  $('dText').innerHTML='Evenly mixed. The <b>net</b> movement was from high to low concentration — that is <b>diffusion</b>. No energy was used.';
+  live('Particles diffused from high to low concentration until evenly mixed. 6 each side.');
+}
+$('dGo').addEventListener('click',diffuse);
+$('dReset').addEventListener('click',renderD);
+
+/* =================== OSMOSIS =================== */
+let oWater=[], oLevelL, oLevelR, oDone=false;
+function renderO(){
+  const svg=$('svgO'); svg.innerHTML=''; oDone=false; oWater=[];
+  // water fill (bottom-anchored rects, scaleY = level)
+  oLevelL=E('rect',{x:44,y:52,width:274,height:346,fill:'rgba(46,124,214,.14)'}); oLevelL.style.transformBox='fill-box'; oLevelL.style.transformOrigin='50% 100%'; oLevelL.style.transform='scaleY(0.5)';
+  oLevelR=E('rect',{x:322,y:52,width:274,height:346,fill:'rgba(46,124,214,.14)'}); oLevelR.style.transformBox='fill-box'; oLevelR.style.transformOrigin='50% 100%'; oLevelR.style.transform='scaleY(0.5)';
+  svg.appendChild(oLevelL); svg.appendChild(oLevelR);
+  container(svg,'partial'); label(svg,180,'dilute','var(--water)'); label(svg,460,'concentrated','var(--solute)');
+  // solute (can't cross): left 2, right 6
+  [[150,300],[240,230]].forEach(([x,y])=>particle(svg,x,y,16,'var(--solute)'));
+  [[400,150],[470,240],[545,180],[410,330],[500,320],[555,270]].forEach(([x,y])=>particle(svg,x,y,16,'var(--solute)'));
+  // water dots (small): 4 left, 4 right; the left ones will cross
+  [[95,180],[120,300],[200,150],[175,350]].forEach(([x,y])=>oWater.push({g:particle(svg,x,y,6,'var(--water)'),x,y,side:'L'}));
+  [[360,200],[430,120],[520,140],[380,360]].forEach(([x,y])=>particle(svg,x,y,6,'var(--water)'));
+  $('oText').innerHTML='The right side has more solute. Water can cross the membrane, but the solute is <b>too big</b>. Press <b>Run osmosis</b>.';
+  $('oSent').className='sentence info'; $('oIco').textContent='i';
+  $('oGo').disabled=false;
+}
+async function osmosis(){
+  if(oDone) return; oDone=true; $('oGo').disabled=true;
+  // 3 left-side water molecules cross to the right
+  const rightSlots=[[350,300],[420,270],[470,340]];
+  const proms=oWater.slice(0,3).map((w,i)=>{
+    const [tx,ty]=rightSlots[i];
+    return anim(w.g,[
+      {transform:`translate(${w.x}px,${w.y}px)`},
+      {transform:`translate(320px,${(w.y+ty)/2}px)`,offset:.5},
+      {transform:`translate(${tx}px,${ty}px)`}
+    ],{duration:2200,easing:'ease-in-out'});
+  });
+  // levels change: right rises, left falls
+  proms.push(anim(oLevelL,[{transform:'scaleY(0.5)'},{transform:'scaleY(0.34)'}],{duration:2200}));
+  proms.push(anim(oLevelR,[{transform:'scaleY(0.5)'},{transform:'scaleY(0.66)'}],{duration:2200}));
+  await Promise.all(proms);
+  $('oSent').className='sentence good'; $('oIco').textContent='✓';
+  $('oText').innerHTML='Water moved from the <b>dilute</b> side into the <b>concentrated</b> side. The level <b>rose on the right</b>. That is <b>osmosis</b> — no energy needed.';
+  live('Water moved by osmosis from the dilute side to the concentrated side. The right level rose.');
+}
+$('oGo').addEventListener('click',osmosis);
+$('oReset').addEventListener('click',renderO);
+
+/* =================== ACTIVE TRANSPORT =================== */
+let aLeft=[], aRightCount=5, atpLeft=4;
+const leftStartA=[[110,320],[190,340],[150,250]];
+const rightSlotsA=[[400,150],[480,200],[420,300],[520,140],[560,270],[380,360],[470,360],[540,340]];
+function renderA(){
+  const svg=$('svgA'); svg.innerHTML=''; aLeft=[]; aRightCount=5; atpLeft=4;
+  container(svg,'permeable');
+  // carrier protein straddling the membrane
+  svg.appendChild(E('rect',{x:304,y:200,width:32,height:120,rx:14,fill:'rgba(24,95,165,.16)',stroke:'var(--blue)','stroke-width':2}));
+  const ct=E('text',{x:320,y:340,'text-anchor':'middle','font-family':'Lexend','font-weight':700,'font-size':12,fill:'var(--blue)'});ct.textContent='carrier';svg.appendChild(ct);
+  label(svg,180,'LOW'); label(svg,460,'HIGH');
+  // uphill arrow low -> high
+  const arr=E('path',{d:'M120 110 Q320 78 500 110',fill:'none',stroke:'var(--energy)','stroke-width':2.5,'stroke-dasharray':'2 7'});svg.appendChild(arr);
+  const at=E('text',{x:320,y:96,'text-anchor':'middle','font-family':'Atkinson Hyperlegible','font-weight':700,'font-size':14,fill:'var(--energy)'});at.textContent='against the gradient ↑';svg.appendChild(at);
+  // right particles (already high) = 5
+  for(let i=0;i<5;i++){const [x,y]=rightSlotsA[i];particle(svg,x,y,11,'var(--particle)');}
+  // left particles = 3
+  leftStartA.forEach(([x,y])=>aLeft.push(particle(svg,x,y,11,'var(--particle)')));
+  $('aLn').textContent='3'; $('aRn').textContent='5'; $('atpN').textContent='4';
+  $('aSent').className='sentence info'; $('aIco').textContent='i';
+  $('aText').innerHTML='The right side is already <b>high</b>. Moving a particle from low to high is <b>uphill</b> — it needs energy. Press <b>Pump</b>.';
+  $('aGo').disabled=false;
+}
+async function pump(){
+  if(aLeft.length===0){setSent2warn('No particles left on the low side. Press Reset.');return;}
+  if(atpLeft<=0){setSent2warn('No ATP left — with no energy, active transport stops.');return;}
+  $('aGo').disabled=true;
+  const g=aLeft.pop(); atpLeft--; aRightCount++;
+  $('atpN').textContent=atpLeft;
+  const cur=g.getAttribute('transform').match(/translate\(([^,]+),([^)]+)\)/);
+  const sx=parseFloat(cur[1]), sy=parseFloat(cur[2]);
+  const [tx,ty]=rightSlotsA[aRightCount-1];
+  await anim(g,[
+    {transform:`translate(${sx}px,${sy}px)`},
+    {transform:`translate(320px,260px)`,offset:.5},           // through the carrier
+    {transform:`translate(${tx}px,${ty}px)`}
+  ],{duration:1200,easing:'ease-in-out'});
+  $('aLn').textContent=aLeft.length; $('aRn').textContent=aRightCount;
+  $('aSent').className='sentence good'; $('aIco').textContent='✓';
+  $('aText').innerHTML=`One particle was pumped <b>low → high</b> using <b>1 ATP</b>. Energy used so far: <b>${4-atpLeft}</b> ATP. The gradient got <b>steeper</b> — that only works with energy.`;
+  live(`Pumped a particle from low to high using 1 ATP. ${atpLeft} ATP left. Left ${aLeft.length}, right ${aRightCount}.`);
+  $('aGo').disabled = (aLeft.length===0 || atpLeft<=0);
+}
+function setSent2warn(msg){$('aSent').className='sentence warn';$('aIco').textContent='!';$('aText').innerHTML=msg;live(msg);}
+$('aGo').addEventListener('click',pump);
+$('aReset').addEventListener('click',renderA);
+
+/* =================== CURSOR + SPOTLIGHT =================== */
+document.querySelectorAll('.spotlight').forEach(el=>el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');}));
+if(!reduced()&&matchMedia('(pointer:fine)').matches){const c=$('cursor');let tx=innerWidth/2,ty=innerHeight/2,cx=tx,cy=ty;addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;},{passive:true});(function loop(){cx+=(tx-cx)*.12;cy+=(ty-cy)*.12;c.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;requestAnimationFrame(loop);})();}else{const c=$('cursor');if(c)c.style.display='none';}
+
+/* =================== INIT =================== */
+renderD(); renderO(); renderA();
+</script>
+</body>
+</html>
